@@ -1,0 +1,24 @@
+<div class="flex h-screen w-screen">
+
+    <div class="hidden lg:flex flex-1 items-center justify-center bg-cover bg-center"
+      style="background-image: url('./assets/images/auth-portada.jpg')">
+      <div class="max-w-2xl space-y-4 p-8 text-center text-white bg-black/40 rounded-xl">
+        <h1 class="text-4xl font-bold">
+          Eficiencia, Control y Gestión Eléctrica
+        </h1>
+      </div>
+
+  </div>
+  <div class="bg-background flex flex-1 items-center justify-center">
+    <div class="max-w-md overflow-y-auto px-4 sm:w-[500px]">
+      
+      <div class="flex items-center justify-center gap-3">
+        <a class=" rounded-sm p-2">
+          <img src="assets/images/logoPCA.png" alt="PCA Logo">
+        </a>
+      </div>
+      
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

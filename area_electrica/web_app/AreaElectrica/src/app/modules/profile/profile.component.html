@@ -1,0 +1,94 @@
+@if (loading) {
+  <div class="flex items-center justify-center py-24">
+    <svg class="h-7 w-7 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+    </svg>
+  </div>
+}
+
+@if (!loading) {
+<div class="mx-auto max-w-xl space-y-3">
+
+  
+  <div class="pb-3 border-b border-border">
+    <p class="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Cuenta</p>
+    <h1 class="mt-0.5 text-lg font-semibold text-foreground">Tu perfil</h1>
+  </div>
+
+  
+  <div class="flex items-center gap-4 rounded-xl border border-border bg-background px-5 py-4">
+    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
+                bg-primary text-primary-foreground text-sm font-semibold tracking-wide">
+      {{ iniciales || '?' }}
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold text-foreground truncate">{{ nombreCompleto }}</p>
+      <p class="text-xs text-muted-foreground">&#64;{{ perfil?.usuario_strnombre ?? '—' }}</p>
+      @if (roles.length > 0) {
+        <div class="mt-1.5 flex flex-wrap gap-1">
+          @for (rol of roles; track rol) {
+            <span class="inline-flex items-center rounded-full border border-border
+                         px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {{ rol | titlecase }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  
+  <div class="rounded-xl border border-border bg-background overflow-hidden">
+    <div class="px-5 py-3 border-b border-border">
+      <p class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Información personal</p>
+    </div>
+    <div class="divide-y divide-border">
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Cédula</span>
+        <span class="text-xs font-medium text-foreground">{{ perfil?.strcedula || '—' }}</span>
+      </div>
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Correo</span>
+        <span class="text-xs font-medium text-foreground">{{ perfil?.strcorreo1 || '—' }}</span>
+      </div>
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Celular</span>
+        <span class="text-xs font-medium text-foreground">{{ perfil?.strcelular1 || '—' }}</span>
+      </div>
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Tipo de sangre</span>
+        <span class="text-xs font-medium text-foreground">{{ perfil?.strtiposangre || '—' }}</span>
+      </div>
+
+    </div>
+  </div>
+
+  
+  <div class="rounded-xl border border-border bg-background overflow-hidden">
+    <div class="px-5 py-3 border-b border-border">
+      <p class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Área y cargo</p>
+    </div>
+    <div class="divide-y divide-border">
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Área</span>
+        <span class="text-xs font-medium text-foreground">Área Eléctrica — PCA</span>
+      </div>
+
+      <div class="flex items-center justify-between px-5 py-3">
+        <span class="text-xs text-muted-foreground">Cargo</span>
+        <span class="text-xs font-medium text-foreground">
+          {{ roles.length > 0 ? (roles[0] | titlecase) : 'Supervisor' }}
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+}

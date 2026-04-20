@@ -1,0 +1,46 @@
+{
+  "name": "bancoalimentos",
+  "version": "1.0.0",
+  "description": "This is a demo for node.je Express (ejs) with mssql",
+  "main": "ServiciosElectricos.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "pm2 start ./bin/www",
+    "stop": "pm2 stop ./bin/www",
+    "dev": "nodemon ServiciosElectricos.js",
+    "pro": "npm i --prod && pm2 restar ServiciosElectricos.js",
+    "prod": "git pull origin main && npm i --prod && sudo pm2 stop ServiciosElectricos.js && sudo pm2 start ServiciosElectricos.js --name ServiciosBancoAlimentos && sudo pm2 save",
+    "prodinit": "git pull origin main && npm i --prod && sudo pm2 start ServiciosElectricos.js --name ServiciosBancoAlimentos && sudo pm2 save",
+    "debug": "node ServiciosElectricos.js"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "axios": "^1.4.0",
+    "base64-stream": "1.0.0",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "~1.4.3",
+    "cors": "*",
+    "crypto-js": "4.1.1",
+    "debug": "~2.6.3",
+    "docx": "^9.6.1",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.3.0",
+    "express": "^4.18.2",
+    "express-jwt": "^6.1.0",
+    "express-rate-limit": "^7.1.1",
+    "helmet": "^7.0.0",
+    "html-pdf": "^3.0.1",
+    "moment": "^2.30.1",
+    "nodemailer": "^6.9.16",
+    "pg": "^8.11.3",
+    "puppeteer": "^24.10.2",
+    "request": "^2.88.0",
+    "sharp": "^0.34.5",
+    "tedious": "^2.2.4"
+  },
+  "author": "Saul Ibarra",
+  "devDependencies": {
+    "nodemon": "^1.19.4"
+  }
+}

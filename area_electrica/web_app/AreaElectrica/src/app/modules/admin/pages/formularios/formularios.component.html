@@ -1,0 +1,541 @@
+<div class="p-4">
+
+  <!-- Encabezado -->
+  <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Gestión de Formularios</h2>
+      <p class="text-sm text-gray-500">Administra todos los formularios enviados a los técnicos.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="exportarLista()"
+        title="Exportar lista visible a PDF"
+        class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        </svg>
+        Exportar PDF
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+        (click)="nuevaOrden()"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo formulario
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <!-- Tabs de estado -->
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        *ngFor="let tab of tabsFiltro"
+        (click)="seleccionarTab(tab.value)"
+        [ngClass]="estadoFiltro === tab.value
+          ? 'bg-blue-600 text-white shadow-sm'
+          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+        class="rounded-lg px-3 py-1.5 text-xs font-medium transition"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="filtro"
+        placeholder="Buscar por contrato, proyecto, locación..."
+        class="w-full sm:w-72 rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-700 placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+      />
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-gray-50 text-gray-600">
+        <tr>
+          <th class="px-4 py-3 w-12">#</th>
+          <th class="px-4 py-3">Tipo</th>
+          <th class="px-4 py-3">Contrato</th>
+          <th class="px-4 py-3">Proyecto</th>
+          <th class="px-4 py-3">Locación</th>
+          <th class="px-4 py-3">Fecha</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <tr *ngIf="cargando">
+          <td colspan="8" class="px-4 py-8 text-center text-gray-500">Cargando formularios...</td>
+        </tr>
+        <tr *ngIf="!cargando && ordenesFiltradas.length === 0">
+          <td colspan="8" class="px-4 py-8 text-center text-gray-400">No se encontraron formularios.</td>
+        </tr>
+        <tr *ngFor="let o of ordenesFiltradas; let i = index" class="hover:bg-gray-50 transition">
+          <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ o.idorden }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+              {{ tipoLabel(o.strtipo) }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strcontrato || '—' }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strproyecto || '—' }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strlocacion || '—' }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ o.dtfecha | date:'dd/MM/yyyy' }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                  [ngClass]="estadoClases(o.strestado)">
+              {{ estadoLabel(o.strestado) }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1">
+              <!-- Ver detalle de la orden -->
+              <button (click)="verDetalle(o)" title="Ver detalle de la orden"
+                class="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+              <!-- Ver reporte técnico (formulario + fotos) -->
+              <button (click)="verReporteTecnico(o)" title="Ver reporte del técnico"
+                class="rounded-md p-1.5 text-purple-600 hover:bg-purple-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </button>
+              <!-- Modificar -->
+              <button (click)="modificar(o)" title="Modificar"
+                class="rounded-md p-1.5 text-gray-600 hover:bg-gray-100 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+              </button>
+              <!-- Cambiar estado -->
+              <button (click)="abrirCambioEstado(o)" title="Cambiar estado"
+                class="rounded-md p-1.5 text-amber-600 hover:bg-amber-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </button>
+              <!-- Eliminar -->
+              <button (click)="abrirEliminar(o)" title="Eliminar"
+                class="rounded-md p-1.5 text-red-500 hover:bg-red-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Contador -->
+  <p *ngIf="!cargando && ordenes.length > 0" class="mt-3 text-xs text-gray-400">
+    Mostrando {{ ordenesFiltradas.length }} de {{ ordenes.length }} formulario(s).
+  </p>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: VER DETALLE
+═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="ordenDetalle" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-y-auto max-h-[90vh]">
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h3 class="text-base font-semibold text-gray-900">
+        Formulario #{{ ordenDetalle.idorden }} — {{ tipoLabel(ordenDetalle.strtipo) }}
+      </h3>
+      <button (click)="cerrarDetalle()" class="rounded-md p-1 text-gray-400 hover:text-gray-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div *ngIf="cargandoDetalle" class="py-8 text-center text-sm text-gray-500">Cargando...</div>
+      <ng-container *ngIf="!cargandoDetalle">
+        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+              [ngClass]="estadoClases(ordenDetalle.strestado)">
+          {{ estadoLabel(ordenDetalle.strestado) }}
+        </span>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><p class="text-xs text-gray-500">Contrato</p><p class="font-medium text-gray-800">{{ ordenDetalle.strcontrato || '—' }}</p></div>
+          <div><p class="text-xs text-gray-500">Proyecto</p><p class="font-medium text-gray-800">{{ ordenDetalle.strproyecto || '—' }}</p></div>
+          <div><p class="text-xs text-gray-500">Registro</p><p class="font-medium text-gray-800">{{ ordenDetalle.strregistro || '—' }}</p></div>
+          <div><p class="text-xs text-gray-500">Locación</p><p class="font-medium text-gray-800">{{ ordenDetalle.strlocacion || '—' }}</p></div>
+          <div><p class="text-xs text-gray-500">Pozo</p><p class="font-medium text-gray-800">{{ ordenDetalle.strpozo || '—' }}</p></div>
+          <div><p class="text-xs text-gray-500">Fecha</p><p class="font-medium text-gray-800">{{ ordenDetalle.dtfecha | date:'dd/MM/yyyy' }}</p></div>
+          <div class="col-span-2"><p class="text-xs text-gray-500">Creado</p><p class="font-medium text-gray-800">{{ ordenDetalle.dtfechacreacion || '—' }}</p></div>
+        </div>
+        <div>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Técnicos asignados</p>
+          <ul *ngIf="ordenDetalle.personal?.length; else sinPersonal" class="space-y-1.5">
+            <li *ngFor="let p of ordenDetalle.personal"
+                class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+              <span class="text-gray-800">{{ p.nombre }}</span>
+              <span *ngIf="p.boolider"
+                class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Líder</span>
+            </li>
+          </ul>
+          <ng-template #sinPersonal>
+            <p class="text-sm text-gray-400">Sin técnicos asignados.</p>
+          </ng-template>
+        </div>
+      </ng-container>
+    </div>
+    <div class="flex items-center justify-between border-t px-6 py-4 gap-2 flex-wrap">
+      <div class="flex gap-2">
+        <button (click)="exportarDetalle(ordenDetalle)" [disabled]="cargandoDetalle"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition disabled:opacity-40">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          </svg>
+          PDF
+        </button>
+        <button (click)="modificar(ordenDetalle); cerrarDetalle()"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          Modificar
+        </button>
+      </div>
+      <button (click)="cerrarDetalle()"
+        class="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: REPORTE TÉCNICO (texto + fotos del formulario móvil)
+═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="reporteTecnico" class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
+  <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl flex flex-col my-6">
+
+    <!-- Header -->
+    <div class="flex items-start justify-between border-b px-6 py-4 flex-shrink-0">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="text-base font-semibold text-gray-900">Reporte técnico — Orden #{{ reporteTecnico.idorden }}</h3>
+          <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+            {{ tipoLabel(reporteTecnico.strtipo) }}
+          </span>
+          <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [ngClass]="estadoClases(reporteTecnico.strestado)">
+            {{ estadoLabel(reporteTecnico.strestado) }}
+          </span>
+        </div>
+        <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-400">
+          <span *ngIf="reporteTecnico.strcontrato">📋 {{ reporteTecnico.strcontrato }}</span>
+          <span *ngIf="reporteTecnico.strproyecto">📁 {{ reporteTecnico.strproyecto }}</span>
+          <span *ngIf="reporteTecnico.strlocacion">📍 {{ reporteTecnico.strlocacion }}</span>
+          <span *ngIf="reporteTecnico.strpozo">🛢 {{ reporteTecnico.strpozo }}</span>
+          <span *ngIf="reporteTecnico.dtfecha">📅 {{ reporteTecnico.dtfecha }}</span>
+        </div>
+      </div>
+      <button (click)="cerrarReporteTecnico()" class="ml-4 rounded-md p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b px-6 flex-shrink-0">
+      <button (click)="tabReporte = 'reporte'"
+        [ngClass]="tabReporte === 'reporte' ? 'border-b-2 border-purple-600 text-purple-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
+        class="px-4 py-3 text-sm transition -mb-px">Reporte general</button>
+      <button (click)="tabReporte = 'equipos'"
+        [ngClass]="tabReporte === 'equipos' ? 'border-b-2 border-purple-600 text-purple-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
+        class="px-4 py-3 text-sm transition -mb-px">
+        Equipos y Fotografías
+        <span *ngIf="cargandoFotos" class="ml-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent align-middle"></span>
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="overflow-y-auto px-6 py-5 max-h-[70vh]">
+
+      <!-- Cargando reporte -->
+      <div *ngIf="cargandoReporte" class="py-12 text-center text-sm text-gray-400">Cargando reporte...</div>
+
+      <!-- Sin datos -->
+      <ng-container *ngIf="!cargandoReporte && reporteTecnico.reportesOrden?.length === 0 && reporteTecnico.reportesEquipo?.length === 0">
+        <div class="py-12 flex flex-col items-center gap-3 text-center">
+          <div class="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg class="h-7 w-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <p class="text-sm font-medium text-gray-600">Aún no hay reporte enviado</p>
+          <p class="text-xs text-gray-400">El técnico todavía no ha sincronizado el formulario desde la app.</p>
+        </div>
+      </ng-container>
+
+      <!-- TAB: Reporte general -->
+      <ng-container *ngIf="!cargandoReporte && tabReporte === 'reporte' && reporteTecnico.reportesOrden?.length > 0">
+        <div *ngFor="let r of reporteTecnico.reportesOrden" class="mb-5 rounded-xl border border-gray-200 overflow-hidden">
+          <div class="flex items-center justify-between bg-gray-50 px-4 py-3 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+              <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+                {{ r.tecnico?.charAt(0) ?? 'T' }}
+              </div>
+              <span class="text-sm font-semibold text-gray-800">{{ r.tecnico }}</span>
+            </div>
+            <span class="text-xs text-gray-400">{{ r.dtfechaenvio }}</span>
+          </div>
+          <div class="p-5 space-y-5">
+            <div>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Desviación general del trabajo</p>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold"
+                [ngClass]="{
+                  'bg-red-100 text-red-700':      r.strdesviaciongeneral === 'Si',
+                  'bg-green-100 text-green-700':   r.strdesviaciongeneral === 'No',
+                  'bg-yellow-100 text-yellow-700': r.strdesviaciongeneral === 'PNC',
+                  'bg-gray-100 text-gray-500':    !r.strdesviaciongeneral
+                }">
+                {{ r.strdesviaciongeneral === 'Si' ? 'Sí — Hay desviación'
+                   : r.strdesviaciongeneral === 'No' ? 'Sin desviación'
+                   : r.strdesviaciongeneral === 'PNC' ? 'Por no conformidad'
+                   : 'No especificado' }}
+              </span>
+            </div>
+            <div>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Conclusión / Observaciones finales</p>
+              <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                {{ r.strconclusiongeneral || '—' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- TAB: Equipos y Fotografías -->
+      <ng-container *ngIf="!cargandoReporte && tabReporte === 'equipos'">
+        <div *ngIf="!equiposConFotos.length" class="py-8 text-center text-sm text-gray-400">No hay reportes de equipos.</div>
+
+        <div *ngFor="let item of equiposConFotos; let last = last"
+             [ngClass]="{ 'mb-6': !last }"
+             class="rounded-xl border border-gray-200 overflow-hidden">
+
+          <!-- Header equipo -->
+          <div class="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 px-4 py-3 border-b border-purple-100">
+            <div class="flex items-center gap-3">
+              <span class="rounded-lg bg-purple-600 px-3 py-1 text-sm font-bold text-white">{{ item.reporte.strtipoequipo }}</span>
+              <span class="text-sm font-semibold text-purple-900">{{ tipoEquipoLabel(item.reporte.strtipoequipo) }}</span>
+            </div>
+            <div class="text-right text-xs text-purple-400">
+              <p>{{ item.reporte.tecnico }}</p>
+              <p>{{ item.reporte.dtfechaenvio }}</p>
+            </div>
+          </div>
+
+          <!-- Datos generales -->
+          <div class="p-4 border-b border-gray-100">
+            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Datos generales</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="rounded-lg bg-gray-50 p-3">
+                <p class="text-xs text-gray-400 mb-0.5">Potencia</p>
+                <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strpotencia || '—' }}</p>
+              </div>
+              <div class="rounded-lg bg-gray-50 p-3">
+                <p class="text-xs text-gray-400 mb-0.5">Serial</p>
+                <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strserial || '—' }}</p>
+              </div>
+              <div class="rounded-lg bg-gray-50 p-3">
+                <p class="text-xs text-gray-400 mb-0.5">Marca</p>
+                <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strmarca || '—' }}</p>
+              </div>
+              <div class="rounded-lg bg-gray-50 p-3">
+                <p class="text-xs text-gray-400 mb-0.5">CAF</p>
+                <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strcaf || '—' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="p-4 border-b border-gray-100 space-y-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Observaciones del técnico</p>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Estado general</span>
+              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                [ngClass]="{
+                  'bg-green-100 text-green-700':   item.reporte.strestadogeneral === 'Bueno',
+                  'bg-yellow-100 text-yellow-700':  item.reporte.strestadogeneral === 'Regular',
+                  'bg-red-100 text-red-700':        item.reporte.strestadogeneral === 'Deficiente',
+                  'bg-gray-100 text-gray-500':     !item.reporte.strestadogeneral
+                }">
+                {{ item.reporte.strestadogeneral || 'No especificado' }}
+              </span>
+            </div>
+            <div *ngIf="item.reporte.stractividades">
+              <p class="text-xs text-gray-500 mb-2">Actividades realizadas</p>
+              <ul class="space-y-1.5">
+                <li *ngFor="let act of item.reporte.stractividades.split('\n')"
+                    class="flex items-start gap-2 text-sm text-gray-700">
+                  <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {{ act }}
+                </li>
+              </ul>
+            </div>
+            <div *ngIf="item.reporte.strdesviaciones">
+              <p class="text-xs text-gray-500 mb-2">Desviaciones encontradas</p>
+              <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 whitespace-pre-wrap leading-relaxed">
+                {{ item.reporte.strdesviaciones }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fotos -->
+          <div class="p-4 bg-gray-50">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Fotografías
+                <span class="ml-1 rounded-full bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">{{ item.fotos.length }}</span>
+              </p>
+              <span *ngIf="cargandoFotos" class="flex items-center gap-1 text-xs text-purple-500">
+                <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent"></span>
+                Cargando...
+              </span>
+            </div>
+            <div *ngIf="!item.fotos.length" class="text-xs text-gray-400 italic">Sin fotografías.</div>
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+              <div *ngFor="let f of item.fotos"
+                   (click)="ampliarFoto(f.idfotoequipo)"
+                   class="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer hover:border-purple-400 transition">
+                <img *ngIf="fotoSrc(f.idfotoequipo)"
+                     [src]="fotoSrc(f.idfotoequipo)"
+                     class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                     [alt]="f.stretiqueta"/>
+                <div *ngIf="!fotoSrc(f.idfotoequipo)"
+                     class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                  <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span *ngIf="cargandoFotos" class="mt-1 h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500 block"></span>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 bg-black/50 px-1.5 py-1">
+                  <p class="text-white text-[10px] truncate font-medium text-center">{{ f.stretiqueta || 'Extra' }}</p>
+                </div>
+                <span *ngIf="f.boolobligatoria" class="absolute top-1 right-1 rounded-full bg-red-500 w-2 h-2 block" title="Obligatoria"></span>
+                <div *ngIf="fotoSrc(f.idfotoequipo)"
+                     class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/20">
+                  <svg class="h-8 w-8 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
+                  </svg>
+                </div>
+                <div *ngIf="f.dbllatitud" class="absolute top-1 left-1 rounded-md bg-black/50 px-1 py-0.5">
+                  <p class="text-white text-[8px]">GPS</p>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="fotosConGps(item.fotos).length" class="mt-3 space-y-1">
+              <p class="text-xs font-medium text-gray-400 mb-1">Coordenadas GPS</p>
+              <div *ngFor="let f of fotosConGps(item.fotos)" class="flex items-center gap-2 text-xs text-gray-500">
+                <svg class="h-3 w-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="font-medium">{{ f.stretiqueta || 'Extra' }}:</span>
+                {{ f.dbllatitud }}, {{ f.dbllongitud }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end border-t px-6 py-4 flex-shrink-0">
+      <button (click)="cerrarReporteTecnico()"
+        class="rounded-lg bg-gray-100 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Visor foto ampliada -->
+<div *ngIf="fotoAmpliada" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" (click)="cerrarFoto()">
+  <img [src]="fotoAmpliada" alt="Foto ampliada" class="max-w-full max-h-full rounded-xl object-contain shadow-2xl" (click)="$event.stopPropagation()"/>
+  <button (click)="cerrarFoto()" class="absolute top-4 right-4 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40 transition">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: CAMBIAR ESTADO
+═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="ordenEstado" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h3 class="text-base font-semibold text-gray-900">Cambiar estado — #{{ ordenEstado.idorden }}</h3>
+      <button (click)="cerrarCambioEstado()" class="rounded-md p-1 text-gray-400 hover:text-gray-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="space-y-2 px-6 py-5">
+      <button *ngFor="let e of estadosLista"
+        (click)="ordenEstado.nuevoEstado = e.value"
+        [ngClass]="ordenEstado.nuevoEstado === e.value ? e.activeCls : 'border-gray-200 bg-gray-50 text-gray-700'"
+        class="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition">
+        <span class="h-2.5 w-2.5 rounded-full flex-shrink-0" [ngClass]="e.dotCls"></span>
+        {{ e.label }}
+      </button>
+    </div>
+    <div class="flex justify-end gap-3 border-t px-6 py-4">
+      <button (click)="cerrarCambioEstado()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancelar</button>
+      <button (click)="confirmarCambioEstado()" [disabled]="cambiandoEstado"
+        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+        {{ cambiandoEstado ? 'Guardando...' : 'Confirmar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: ELIMINAR
+═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="ordenEliminar" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+    <div class="space-y-3 px-6 py-6 text-center">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <h3 class="text-base font-semibold text-gray-900">¿Eliminar formulario #{{ ordenEliminar.idorden }}?</h3>
+      <p class="text-sm text-gray-500">Esta acción es irreversible. Se eliminará el personal asignado y las notificaciones relacionadas.</p>
+    </div>
+    <div class="flex justify-center gap-3 border-t px-6 py-4">
+      <button (click)="cerrarEliminar()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancelar</button>
+      <button (click)="confirmarEliminar()" [disabled]="eliminando"
+        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+        {{ eliminando ? 'Eliminando...' : 'Sí, eliminar' }}
+      </button>
+    </div>
+  </div>
+</div>

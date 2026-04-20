@@ -1,0 +1,654 @@
+<div class="p-4">
+
+  <!-- Toast global -->
+  @if (toastMensaje) {
+    <div class="fixed top-4 right-4 z-[100] flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg text-sm font-medium transition-all"
+      [class.bg-red-600]="toastTipo === 'error'"
+      [class.text-white]="toastTipo === 'error'"
+      [class.bg-green-600]="toastTipo === 'success'"
+      [class.text-white]="toastTipo === 'success'">
+      @if (toastTipo === 'error') {
+        <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+      } @else {
+        <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+      }
+      {{ toastMensaje }}
+    </div>
+  }
+
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Equipos Internos</h2>
+      <p class="text-sm text-gray-500">Registro y administración de equipos internos</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        placeholder="Buscar por equipo, serie, marca o modelo..."
+        class="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+        (input)="filtro = $any($event.target).value"
+      />
+      <!-- Regla 2: botón mejorado -->
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-95"
+        style="background: linear-gradient(135deg, #093E80, #1a5fb4)"
+        (click)="crearNuevoEquipo()">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Registrar equipo
+      </button>
+    </div>
+  </div>
+
+  <div class="mb-2">
+    <span class="text-xs text-gray-400">{{ equiposFiltrados.length }} equipo(s) registrado(s)</span>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-xs">
+      <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+        <tr>
+          <th class="px-3 py-2.5">Tipo</th>
+          <th class="px-3 py-2.5">Marca</th>
+          <th class="px-3 py-2.5">Serie</th>
+          <th class="px-3 py-2.5">F. Vencimiento</th>
+          <th class="px-3 py-2.5">Disponibilidad</th>
+          <th class="px-3 py-2.5">Estado</th>
+          <th class="px-3 py-2.5 text-center">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-200">
+        @if (cargando) {
+          <tr>
+            <td colspan="7" class="px-4 py-6 text-center text-gray-500">Cargando equipos...</td>
+          </tr>
+        } @else if (equiposFiltrados.length === 0) {
+          <tr>
+            <td colspan="7" class="px-4 py-6 text-center text-gray-500">No hay equipos registrados.</td>
+          </tr>
+        } @else {
+          @for (p of equiposFiltrados; track p.idequipointerno ?? p.idequipoint) {
+            <tr class="hover:bg-gray-50">
+
+              <!-- Tipo -->
+              <td class="px-3 py-2.5">
+                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                  {{ p.strequipo ?? '-' }}
+                </span>
+              </td>
+
+              <!-- Marca -->
+              <td class="px-3 py-2.5 font-medium text-gray-900">{{ p.strmarca ?? '-' }}</td>
+
+              <!-- Serie -->
+              <td class="px-3 py-2.5 font-mono text-gray-700">{{ p.strserie ?? '-' }}</td>
+
+              <!-- Fecha vencimiento con alerta visual -->
+              <td class="px-3 py-2.5">
+                @if (p.dtfechavencimiento) {
+                  @if (diasHastaVencimiento(p.dtfechavencimiento) < 0) {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                      <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                      Vencido
+                    </span>
+                    <p class="mt-0.5 text-red-400">{{ p.dtfechavencimiento | date:'dd/MM/yyyy' }}</p>
+                  } @else if (diasHastaVencimiento(p.dtfechavencimiento) <= 7) {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                      <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                      {{ diasHastaVencimiento(p.dtfechavencimiento) }}d
+                    </span>
+                    <p class="mt-0.5 text-orange-500">{{ p.dtfechavencimiento | date:'dd/MM/yyyy' }}</p>
+                  } @else {
+                    <span class="text-gray-600">{{ p.dtfechavencimiento | date:'dd/MM/yyyy' }}</span>
+                  }
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </td>
+
+              <!-- Disponibilidad -->
+              <td class="px-3 py-2.5">
+                @if ((p.strdisponibilidad ?? '').toLowerCase().includes('ocup')) {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>Ocupado
+                  </span>
+                  @if (p.strnombretecnico) {
+                    <p class="mt-0.5 text-[10px] text-orange-600 font-medium">{{ p.strnombretecnico }}</p>
+                    @if (p.dtfechainicio) {
+                      <p class="text-[10px] text-gray-400">{{ p.dtfechainicio | date:'dd/MM/yy HH:mm' }}</p>
+                    }
+                  }
+                } @else if ((p.strdisponibilidad ?? '').toLowerCase().includes('mant')) {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-purple-500"></span>Mantenimiento
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Libre
+                  </span>
+                }
+              </td>
+
+              <!-- Estado -->
+              <td class="px-3 py-2.5">
+                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                  [class.bg-green-100]="(p.blestado ?? p.activo) === true"
+                  [class.text-green-700]="(p.blestado ?? p.activo) === true"
+                  [class.bg-red-100]="(p.blestado ?? p.activo) !== true"
+                  [class.text-red-700]="(p.blestado ?? p.activo) !== true">
+                  <span class="h-1.5 w-1.5 rounded-full"
+                    [class.bg-green-500]="(p.blestado ?? p.activo) === true"
+                    [class.bg-red-500]="(p.blestado ?? p.activo) !== true"></span>
+                  {{ (p.blestado ?? p.activo) === true ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="px-3 py-2.5">
+                <div class="flex items-center justify-center gap-1">
+
+                  <button type="button" title="Ver detalle"
+                    class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition"
+                    (click)="verDetalleEquipo(p)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </button>
+
+                  <button type="button" title="Editar equipo"
+                    class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 hover:text-blue-700 transition"
+                    (click)="editarEquipo(p)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+
+                  <!-- Disponibilidad: bloqueado si Ocupado (regla 6) -->
+                  <button type="button"
+                    [title]="disponibilidadAccion(p)"
+                    class="rounded-lg p-1.5 transition"
+                    [class.text-gray-300]="esOcupado(p)"
+                    [class.cursor-not-allowed]="esOcupado(p)"
+                    [class.text-purple-600]="!esOcupado(p) && (p.strdisponibilidad ?? '').toLowerCase().includes('mant')"
+                    [class.text-amber-500]="!esOcupado(p) && !((p.strdisponibilidad ?? '').toLowerCase().includes('mant'))"
+                    [disabled]="esOcupado(p)"
+                    (click)="cambiarDisponibilidad(p)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                  </button>
+
+                  <!-- Toggle estado: bloqueado si Ocupado (reglas 3 y 4) -->
+                  <button type="button"
+                    [title]="esOcupado(p) ? 'No se puede cambiar el estado de un equipo Ocupado' : ((p.blestado ?? p.activo) === true ? 'Desactivar equipo' : 'Activar equipo')"
+                    class="rounded-lg p-1.5 transition"
+                    [class.text-gray-300]="esOcupado(p)"
+                    [class.cursor-not-allowed]="esOcupado(p)"
+                    [class.text-red-500]="!esOcupado(p) && (p.blestado ?? p.activo) === true"
+                    [class.text-green-600]="!esOcupado(p) && (p.blestado ?? p.activo) !== true"
+                    [disabled]="esOcupado(p)"
+                    (click)="toggleEstadoEquipo(p)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/>
+                    </svg>
+                  </button>
+
+                  <button type="button" title="Descargar certificado PDF"
+                    class="rounded-lg p-1.5 transition"
+                    [class.text-indigo-500]="esPDF(p.strcertificado)"
+                    [class.hover:bg-indigo-50]="esPDF(p.strcertificado)"
+                    [class.text-gray-300]="!esPDF(p.strcertificado)"
+                    [class.cursor-not-allowed]="!esPDF(p.strcertificado)"
+                    [disabled]="!esPDF(p.strcertificado)"
+                    (click)="descargarCertificado(p)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </button>
+
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+
+
+@if (modalAbierto) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="absolute inset-0" (click)="cerrarModalEquipo()"></div>
+
+    <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #093E80, #1a5fb4)" class="px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-white/60 text-[11px] font-semibold uppercase tracking-widest mb-1">
+              {{ modalModo === 'crear' ? 'Nuevo registro' : 'Modificar registro' }}
+            </p>
+            <h3 class="text-white font-bold text-lg leading-tight">
+              {{ modalModo === 'crear' ? 'Registrar equipo interno' : 'Editar equipo' }}
+            </h3>
+          </div>
+          <button type="button"
+            class="rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+            (click)="cerrarModalEquipo()">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
+
+        <!-- Regla 1: nota cuando equipo está en Mantenimiento + inactivo -->
+        @if (modalModo === 'editar' && (objEquipo.strdisponibilidad ?? '').toLowerCase().includes('mant') && objEquipo.blestado === false) {
+          <div class="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-xs text-blue-700 leading-relaxed">
+              <strong>Equipo en mantenimiento e inactivo.</strong> Al actualizar la fecha de vencimiento del certificado a una fecha futura, el equipo pasará automáticamente a estado <strong>Libre y Activo</strong>.
+            </p>
+          </div>
+        }
+
+        <!-- Datos del equipo -->
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Datos del equipo</p>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+            <!-- Tipo -->
+            <div class="sm:col-span-2">
+              @if (modalModo === 'crear') {
+                <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de equipo</label>
+                <select
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  [(ngModel)]="objEquipo.strequipo" name="strequipo">
+                  <option value="" disabled>Seleccione...</option>
+                  <optgroup label="Categorías estándar">
+                    @for (cat of categorias; track cat.id) {
+                      <option [value]="cat.label">{{ cat.label }}</option>
+                    }
+                  </optgroup>
+                  @if (tiposPersonalizados.length > 0) {
+                    <optgroup label="Tipos personalizados">
+                      @for (tipo of tiposPersonalizados; track tipo) {
+                        <option [value]="tipo">{{ tipo }}</option>
+                      }
+                    </optgroup>
+                  }
+                  <option value="__otro__">＋ Otro (especificar)</option>
+                </select>
+                @if (objEquipo.strequipo === '__otro__') {
+                  <input type="text"
+                    class="mt-2 w-full rounded-lg border border-blue-300 bg-blue-50/40 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    [(ngModel)]="tipoCustom" name="tipoCustom"
+                    placeholder="Ingresa el tipo de equipo..." />
+                }
+              } @else {
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Tipo de equipo</p>
+                <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-sm font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                  {{ objEquipo.strequipo === '__otro__' ? tipoCustom : (objEquipo.strequipo || '-') }}
+                </span>
+              }
+            </div>
+
+            <!-- Serie -->
+            <div>
+              @if (modalModo === 'crear') {
+                <label class="block text-xs font-medium text-gray-600 mb-1">Serie</label>
+                <input type="text"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  [(ngModel)]="objEquipo.strserie" name="strserie" placeholder="Ej: 1234567890" />
+              } @else {
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Serie</p>
+                <p class="text-sm font-mono text-gray-800">{{ objEquipo.strserie || '-' }}</p>
+              }
+            </div>
+
+            <!-- Marca -->
+            <div>
+              @if (modalModo === 'crear') {
+                <label class="block text-xs font-medium text-gray-600 mb-1">Marca</label>
+                <input type="text"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  [(ngModel)]="objEquipo.strmarca" name="strmarca" placeholder="Ej: Fluke" />
+              } @else {
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Marca</p>
+                <p class="text-sm font-medium text-gray-800">{{ objEquipo.strmarca || '-' }}</p>
+              }
+            </div>
+
+            <!-- Modelo -->
+            <div>
+              @if (modalModo === 'crear') {
+                <label class="block text-xs font-medium text-gray-600 mb-1">Modelo</label>
+                <input type="text"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  [(ngModel)]="objEquipo.strmodelo" name="strmodelo" placeholder="Ej: 1587F" />
+              } @else {
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Modelo</p>
+                <p class="text-sm font-medium text-gray-800">{{ objEquipo.strmodelo || '-' }}</p>
+              }
+            </div>
+
+            <!-- Descripción: solo en crear -->
+            @if (modalModo === 'crear') {
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Descripción <span class="text-gray-400 font-normal">(opcional)</span></label>
+                <input type="text"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  [(ngModel)]="objEquipo.strdescripcion" name="strdescripcion" placeholder="Descripción del equipo..." />
+              </div>
+            }
+
+            <!-- Imagen referencial (ambos modos) -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">
+                Imagen referencial <span class="text-gray-400 font-normal">(opcional)</span>
+              </label>
+
+              @if (archivoImagenDataUrl) {
+                <div class="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <img [src]="archivoImagenDataUrl" class="w-full max-h-48 object-contain" alt="Vista previa" />
+                  <button type="button"
+                    class="absolute top-2 right-2 rounded-full bg-white/90 p-1.5 text-gray-600 hover:bg-red-100 hover:text-red-600 shadow transition"
+                    (click)="limpiarImagen()">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              } @else if (modalModo === 'editar' && objEquipo.strimagen) {
+                <div class="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <img [src]="'http://localhost:3001/wselectricos/imagenes_equipos/' + objEquipo.strimagen"
+                       class="w-full max-h-48 object-contain" alt="Imagen referencial actual" />
+                  <label class="absolute inset-0 flex items-end justify-center pb-3 cursor-pointer">
+                    <span class="rounded-lg bg-black/60 px-3 py-1.5 text-xs text-white font-medium">Cambiar imagen</span>
+                    <input type="file" accept="image/*" class="hidden" (change)="onImagenSeleccionada($event)" />
+                  </label>
+                </div>
+              } @else {
+                <label class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 py-6 text-sm text-gray-400 transition hover:border-blue-400 hover:bg-blue-50/30">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span>Haz clic para subir una imagen</span>
+                  <input type="file" accept="image/*" class="hidden" (change)="onImagenSeleccionada($event)" />
+                </label>
+              }
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Certificado de calibración -->
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">Certificado de calibración</p>
+            <div class="flex-1 border-t border-gray-100"></div>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">
+                Archivo PDF del certificado
+                @if (modalModo === 'crear') { <span class="text-red-400">*</span> }
+              </label>
+              @if (!archivoCertificadoNombre) {
+                <label class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm text-gray-400 transition hover:border-blue-400 hover:bg-blue-50/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                  <span>Seleccionar archivo PDF...</span>
+                  <input type="file" accept=".pdf" class="hidden" (change)="onPDFSeleccionado($event)" />
+                </label>
+              } @else {
+                <div class="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                  <span class="flex-1 truncate text-sm text-gray-700">{{ archivoCertificadoNombre }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500 transition" (click)="limpiarPDF()">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+              @if (modalModo === 'editar' && objCertificado.strcertificado && !archivoCertificadoNombre) {
+                <p class="mt-1.5 text-xs text-gray-400">
+                  Archivo actual: <span class="font-mono">{{ objCertificado.strcertificado }}</span> — sube uno nuevo para reemplazarlo.
+                </p>
+              }
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Fecha de emisión</label>
+              <input type="date"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                [(ngModel)]="objCertificado.dtfechaemision" name="dtfechaemision" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Fecha de vencimiento</label>
+              <input type="date"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                [(ngModel)]="objCertificado.dtfechavencimiento" name="dtfechavencimiento" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Observaciones <span class="text-gray-400 font-normal">(opcional)</span></label>
+              <textarea rows="2"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                [(ngModel)]="objCertificado.strdescripcion" name="strdescripcion"
+                placeholder="Ej: Certificado emitido por laboratorio acreditado..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        @if (mensajeEstado) {
+          <div class="rounded-lg border px-4 py-2.5 text-sm font-medium"
+            [class.bg-red-50]="tipoMensajeEstado === 'error'"
+            [class.text-red-700]="tipoMensajeEstado === 'error'"
+            [class.border-red-200]="tipoMensajeEstado === 'error'"
+            [class.bg-green-50]="tipoMensajeEstado === 'success'"
+            [class.text-green-700]="tipoMensajeEstado === 'success'"
+            [class.border-green-200]="tipoMensajeEstado === 'success'">
+            {{ mensajeEstado }}
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-2 border-t bg-gray-50/50 px-6 py-4">
+        <button type="button"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+          (click)="cerrarModalEquipo()">
+          Cancelar
+        </button>
+        <button type="button"
+          class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-40"
+          style="background:#093E80"
+          [disabled]="disableGuardar"
+          (click)="guardarEquipo()">
+          {{ modalModo === 'crear' ? 'Registrar equipo' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+
+
+
+@if (detalleAbierto && equipoDetalle) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="absolute inset-0" (click)="cerrarDetalle()"></div>
+
+    <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #093E80, #1a5fb4)" class="px-6 py-5">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0 pr-4">
+            <p class="text-white/60 text-[11px] font-semibold uppercase tracking-widest mb-1">Equipo interno</p>
+            <h3 class="text-white font-bold text-lg leading-tight">
+              {{ equipoDetalle.strmarca }} {{ equipoDetalle.strmodelo }}
+            </h3>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <span class="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-white">
+                {{ equipoDetalle.strequipo ?? '-' }}
+              </span>
+              @if ((equipoDetalle.strdisponibilidad ?? '').toLowerCase().includes('ocup')) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-orange-400 px-2.5 py-0.5 text-xs font-semibold text-orange-900">Ocupado</span>
+                @if (equipoDetalle.strnombretecnico) {
+                  <span class="ml-1 text-white/80 text-xs">{{ equipoDetalle.strnombretecnico }}</span>
+                }
+              } @else if ((equipoDetalle.strdisponibilidad ?? '').toLowerCase().includes('mant')) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-purple-400 px-2.5 py-0.5 text-xs font-semibold text-purple-900">Mantenimiento</span>
+              } @else {
+                <span class="inline-flex items-center gap-1 rounded-full bg-green-400 px-2.5 py-0.5 text-xs font-semibold text-green-900">Libre</span>
+              }
+            </div>
+          </div>
+          <button type="button"
+            class="rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10 transition flex-shrink-0"
+            (click)="cerrarDetalle()">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Imagen referencial -->
+      @if (equipoDetalle.strimagen) {
+        <div class="border-b border-gray-100">
+          <img [src]="'http://localhost:3001/wselectricos/imagenes_equipos/' + equipoDetalle.strimagen"
+               class="w-full max-h-52 object-contain bg-gray-50" alt="Imagen referencial" />
+        </div>
+      }
+
+      <!-- Body -->
+      <div class="px-6 py-5 max-h-[50vh] overflow-y-auto space-y-5">
+
+        <!-- Info del equipo -->
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Información del equipo</p>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">Serie</dt>
+              <dd class="font-mono text-gray-800 mt-0.5">{{ equipoDetalle.strserie ?? '-' }}</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">Marca</dt>
+              <dd class="font-medium text-gray-800 mt-0.5">{{ equipoDetalle.strmarca ?? '-' }}</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">Modelo</dt>
+              <dd class="font-medium text-gray-800 mt-0.5">{{ equipoDetalle.strmodelo ?? '-' }}</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">Estado</dt>
+              <dd class="mt-0.5">
+                <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+                  [class.bg-green-100]="(equipoDetalle.blestado ?? equipoDetalle.activo) === true"
+                  [class.text-green-700]="(equipoDetalle.blestado ?? equipoDetalle.activo) === true"
+                  [class.bg-red-100]="(equipoDetalle.blestado ?? equipoDetalle.activo) !== true"
+                  [class.text-red-700]="(equipoDetalle.blestado ?? equipoDetalle.activo) !== true">
+                  <span class="h-1.5 w-1.5 rounded-full"
+                    [class.bg-green-500]="(equipoDetalle.blestado ?? equipoDetalle.activo) === true"
+                    [class.bg-red-500]="(equipoDetalle.blestado ?? equipoDetalle.activo) !== true"></span>
+                  {{ (equipoDetalle.blestado ?? equipoDetalle.activo) === true ? 'Activo' : 'Inactivo' }}
+                </span>
+              </dd>
+            </div>
+            @if (equipoDetalle.strdescripcion) {
+              <div class="col-span-2">
+                <dt class="text-[10px] font-semibold uppercase text-gray-400">Descripción</dt>
+                <dd class="text-gray-700 mt-0.5">{{ equipoDetalle.strdescripcion }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+
+        <!-- Certificado -->
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Certificado de calibración</p>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">F. Emisión</dt>
+              <dd class="text-gray-800 mt-0.5">
+                {{ equipoDetalle.dtfechaemision ? (equipoDetalle.dtfechaemision | date:'dd/MM/yyyy') : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-semibold uppercase text-gray-400">F. Vencimiento</dt>
+              <dd class="mt-0.5">
+                @if (equipoDetalle.dtfechavencimiento) {
+                  @if (diasHastaVencimiento(equipoDetalle.dtfechavencimiento) < 0) {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                      <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Vencido
+                    </span>
+                    <p class="text-xs text-red-400 mt-0.5">{{ equipoDetalle.dtfechavencimiento | date:'dd/MM/yyyy' }}</p>
+                  } @else if (diasHastaVencimiento(equipoDetalle.dtfechavencimiento) <= 7) {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                      <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                      {{ diasHastaVencimiento(equipoDetalle.dtfechavencimiento) }}d restantes
+                    </span>
+                    <p class="text-xs text-orange-500 mt-0.5">{{ equipoDetalle.dtfechavencimiento | date:'dd/MM/yyyy' }}</p>
+                  } @else {
+                    <span class="text-gray-800">{{ equipoDetalle.dtfechavencimiento | date:'dd/MM/yyyy' }}</span>
+                  }
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </dd>
+            </div>
+            @if (equipoDetalle.strdescripcion_cert) {
+              <div class="col-span-2">
+                <dt class="text-[10px] font-semibold uppercase text-gray-400">Observaciones</dt>
+                <dd class="text-gray-700 mt-0.5">{{ equipoDetalle.strdescripcion_cert }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between border-t bg-gray-50/50 px-6 py-4">
+        <button type="button"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+          (click)="cerrarDetalle()">
+          Cerrar
+        </button>
+        @if (esPDF(equipoDetalle.strcertificado)) {
+          <button type="button"
+            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+            (click)="descargarCertificado(equipoDetalle)">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Descargar certificado
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

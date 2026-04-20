@@ -1,0 +1,394 @@
+<div class="p-4">
+  
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Técnicos</h2>
+      <p class="text-sm text-gray-500">Personal con rol de técnico en el área eléctrica.</p>
+    </div>
+    <input
+      type="text"
+      placeholder="Buscar por nombre, apellido o cédula..."
+      class="w-full sm:w-80 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+      (input)="filtro = $any($event.target).value"
+    />
+  </div>
+
+  
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <tr>
+          <th class="px-4 py-3">Nombre</th>
+          <th class="px-4 py-3">Apellido</th>
+          <th class="px-4 py-3">Celular</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+
+        @if (cargando) {
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="h-4 w-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                Cargando técnicos...
+              </div>
+            </td>
+          </tr>
+        }
+
+        @if (!cargando && tecnicosFiltrados.length === 0) {
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+              No hay técnicos registrados con ese rol.
+            </td>
+          </tr>
+        }
+
+        @for (t of tecnicosFiltrados; track t) {
+          <tr class="hover:bg-gray-50">
+
+            <td class="px-4 py-3 font-medium text-gray-800">
+              {{ t.strnombres ?? t.oustrnombres ?? '—' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-700">
+              {{ t.strapellidos ?? t.oustrapellidos ?? '—' }}
+            </td>
+
+            <td class="px-4 py-3 font-mono text-gray-600">
+              {{ t.strcelular1 ?? t.oustrcelular1 ?? '—' }}
+            </td>
+
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1">
+                
+                
+                @if (getTurnoHoy(t) === 'TRABAJO') {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-green-500 px-2 py-0.5 text-[11px] font-semibold text-white w-fit">
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    De turno
+                  </span>
+                }
+                @if (getTurnoHoy(t) === 'DESCANSO') {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-semibold text-white w-fit">
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    Descanso
+                  </span>
+                }
+              </div>
+            </td>
+
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1">
+
+                
+                <button type="button" title="Ver detalle" (click)="verDetalle(t)"
+                  class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+
+                
+                <button type="button" title="Ver turno" (click)="verTurno(t)"
+                  class="rounded-lg p-2 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+
+              </div>
+            </td>
+          </tr>
+        }
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (modalTurno) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" (click)="cerrarTurno()"></div>
+
+    <div class="relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl border border-gray-100">
+
+      
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </span>
+          <div>
+            <h3 class="text-base font-semibold text-gray-900">Turno del técnico</h3>
+            <p class="text-xs text-gray-500">
+              {{ turnoTecnico?.strnombres }} {{ turnoTecnico?.strapellidos }}
+            </p>
+          </div>
+        </div>
+        <button type="button" class="rounded-full p-1.5 text-gray-400 hover:bg-gray-100"
+          (click)="cerrarTurno()">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="px-6 py-5">
+
+        
+        <div class="flex items-center justify-between mb-4">
+          <button type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+            (click)="mesAnterior()">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <span class="text-sm font-semibold text-gray-800">{{ nombreMesTurno }}</span>
+          <button type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+            (click)="mesSiguiente()">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        
+        <div class="grid grid-cols-7 mb-1">
+          @for (d of ['L','M','M','J','V','S','D']; track $index) {
+            <div class="text-center text-xs font-semibold text-gray-400 py-1">{{ d }}</div>
+          }
+        </div>
+
+        
+        <div class="flex items-center justify-center gap-4 mb-3 text-xs">
+          <span class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded bg-green-500"></span>
+            <span class="text-gray-500">Trabajo</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded bg-amber-400"></span>
+            <span class="text-gray-500">Descanso</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded border border-gray-300"></span>
+            <span class="text-gray-500">Sin asignar</span>
+          </span>
+        </div>
+
+        
+        <div class="grid grid-cols-7 gap-1">
+          @for (dia of diasCalendario; track dia.fecha) {
+            <button type="button"
+              (click)="toggleDiaCalendario(dia.fecha, dia.mesActual)"
+              class="relative flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors"
+              [class.opacity-30]="!dia.mesActual"
+              [class.cursor-default]="!dia.mesActual"
+              [class.bg-green-500]="dia.mesActual && getTipoFecha(dia.fecha) === 'TRABAJO'"
+              [class.text-white]="dia.mesActual && getTipoFecha(dia.fecha) !== null"
+              [class.bg-amber-400]="dia.mesActual && getTipoFecha(dia.fecha) === 'DESCANSO'"
+              [class.text-gray-700]="dia.mesActual && getTipoFecha(dia.fecha) === null"
+              [class.hover:bg-gray-100]="dia.mesActual && getTipoFecha(dia.fecha) === null">
+              {{ dia.dia }}
+            </button>
+          }
+        </div>
+
+        
+        <div class="mt-4 flex items-center justify-center gap-4 text-xs">
+          @if (totalTrabajo > 0) {
+            <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 font-medium text-green-700">
+              <span class="h-2 w-2 rounded-full bg-green-500"></span>
+              {{ totalTrabajo }} trabajo
+            </span>
+          }
+          @if (totalDescanso > 0) {
+            <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-700">
+              <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+              {{ totalDescanso }} descanso
+            </span>
+          }
+          @if (totalTrabajo === 0 && totalDescanso === 0) {
+            <span class="text-gray-400">Haz clic en los días para asignar turno</span>
+          }
+        </div>
+
+        
+        @if (turnoMensaje) {
+          <div class="mt-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ turnoMensaje }}
+          </div>
+        }
+        @if (turnoError) {
+          <div class="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+            <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ turnoError }}
+          </div>
+        }
+      </div>
+
+      
+      <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
+        <button type="button"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          (click)="cerrarTurno()">Cancelar</button>
+        <button type="button"
+          class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          [disabled]="turnoGuardando"
+          (click)="guardarTurnos()">
+          @if (turnoGuardando) {
+            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+          }
+          Guardar turnos
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (modalAbierto) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="cerrarModal()"></div>
+
+    <div class="relative w-full max-w-lg mx-4 rounded-xl bg-white shadow-xl border border-gray-200">
+      <div class="flex items-center justify-between px-5 py-4 border-b">
+        <h3 class="text-base font-semibold text-gray-900">Editar técnico</h3>
+        <button class="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          (click)="cerrarModal()">✕</button>
+      </div>
+
+      <div class="px-5 py-4 grid grid-cols-2 gap-4 overflow-y-auto max-h-[70vh]">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombres</label>
+          <input type="text" [(ngModel)]="objTecnico.strnombres"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+          <input type="text" [(ngModel)]="objTecnico.strapellidos"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cédula</label>
+          <input type="text" [value]="objTecnico.strcedula || '—'"
+            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed" readonly />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Celular</label>
+          <input type="text" [(ngModel)]="objTecnico.strcelular1" maxlength="10"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Correo</label>
+          <input type="email" [(ngModel)]="objTecnico.strcorreo1"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de sangre</label>
+          <input [value]="objTecnico.strtiposangre || '—'"
+            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed" readonly />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 px-5 py-4 border-t">
+        <button class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          (click)="cerrarModal()">Cancelar</button>
+        <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          (click)="guardar()">Guardar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (detalleAbierto) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="cerrarDetalle()"></div>
+
+    <div class="relative w-full max-w-md mx-4 rounded-xl bg-white shadow-xl border border-gray-200">
+      <div class="flex items-center justify-between px-5 py-4 border-b">
+        <h3 class="text-base font-semibold text-gray-900">Detalle del técnico</h3>
+        <button class="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          (click)="cerrarDetalle()">✕</button>
+      </div>
+
+      @if (personaDetalle) {
+        <div class="px-5 py-5 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white text-sm font-bold">
+              {{ (personaDetalle.strnombres ?? personaDetalle.oustrnombres ?? '?')[0]?.toUpperCase() }}{{ (personaDetalle.strapellidos ?? personaDetalle.oustrapellidos ?? '')[0]?.toUpperCase() }}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">
+                {{ personaDetalle.strnombres ?? personaDetalle.oustrnombres ?? '—' }}
+                {{ personaDetalle.strapellidos ?? personaDetalle.oustrapellidos ?? '' }}
+              </p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                @for (r of (personaDetalle.roles ?? []); track r) {
+                  <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                    {{ r.ourol_strnombre ?? r.rol_strnombre ?? r }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p class="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Cédula</p>
+              <p class="text-sm font-medium text-gray-800 font-mono">{{ personaDetalle.strcedula || personaDetalle.oustrcedula || '—' }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p class="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Celular</p>
+              <p class="text-sm font-medium text-gray-800 font-mono">{{ personaDetalle.strcelular1 ?? personaDetalle.oustrcelular1 ?? '—' }}</p>
+            </div>
+            <div class="col-span-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p class="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Correo</p>
+              <p class="text-sm font-medium text-gray-800">{{ personaDetalle.strcorreo1 ?? personaDetalle.oustrcorreo1 ?? '—' }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p class="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Tipo de sangre</p>
+              <p class="text-sm font-medium text-gray-800">{{ personaDetalle.strtiposangre || personaDetalle.oustrtiposangre || '—' }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p class="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Estado</p>
+              <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                [class.bg-green-100]="(personaDetalle.usuario_blestado ?? personaDetalle.blestado ?? personaDetalle.ouusuario_blestado ?? personaDetalle.activo) === true"
+                [class.text-green-700]="(personaDetalle.usuario_blestado ?? personaDetalle.blestado ?? personaDetalle.ouusuario_blestado ?? personaDetalle.activo) === true"
+                [class.bg-red-100]="(personaDetalle.usuario_blestado ?? personaDetalle.blestado ?? personaDetalle.ouusuario_blestado ?? personaDetalle.activo) !== true"
+                [class.text-red-700]="(personaDetalle.usuario_blestado ?? personaDetalle.blestado ?? personaDetalle.ouusuario_blestado ?? personaDetalle.activo) !== true">
+                {{ (personaDetalle.usuario_blestado ?? personaDetalle.blestado ?? personaDetalle.ouusuario_blestado ?? personaDetalle.activo) === true ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="flex justify-end px-5 py-4 border-t">
+        <button class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

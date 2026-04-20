@@ -1,0 +1,165 @@
+<form class="my-10 space-y-7" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="text-center">
+    <h2 class="text-foreground mb-2 text-4xl font-semibold">Inicia sesión</h2>
+    <p class="text-muted-foreground text-base">
+      Ingresa tus credenciales para acceder a tu cuenta.
+    </p>
+  </div>
+
+  <div class="space-y-5 text-left">
+
+    <div class="form__group">
+      <div class="relative">
+        <input
+          type="text"
+          id="usuario"
+          formControlName="usuario"
+          placeholder=" "
+          (keydown.enter)="onSubmit()"
+          [ngClass]="{ 'is__invalid-input': submitted && f['usuario'].errors }"
+          class="peer block w-full rounded-xl border border-slate-300 bg-white px-4 pt-6 pb-3 text-lg outline-none
+                 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+        <label
+          for="usuario"
+          [ngClass]="{ 'peer-focus:text-destructive!': submitted && f['usuario'].errors }"
+          class="bg-background text-muted-foreground peer-focus:text-primary absolute top-2 z-10 origin-[0] -translate-y-4 scale-95 transform px-2 text-sm duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-95 peer-focus:px-2 ltr:left-1 rtl:right-1"
+        >
+          Usuario
+        </label>
+        @if (submitted && f['usuario'].errors) {
+          <div class="mt-2 text-sm text-destructive">
+            @if (f['usuario'].errors['required']) {
+              <div>Campo obligatorio</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form__group">
+      <div class="relative">
+        <input
+          [type]="passwordVisible() ? 'text' : 'password'"
+          id="password"
+          formControlName="password"
+          placeholder=" "
+          (keydown.enter)="onSubmit()"
+          [ngClass]="{ 'is__invalid-input': submitted && f['password'].errors }"
+          class="peer block w-full rounded-xl border border-slate-300 bg-white px-4 pt-6 pb-3 pr-12 text-lg outline-none
+                 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+        <label
+          for="password"
+          [ngClass]="{ 'peer-focus:text-destructive!': submitted && f['password'].errors }"
+          class="bg-background text-muted-foreground peer-focus:text-primary absolute top-2 z-10 origin-[0] -translate-y-4 scale-95 transform px-2 text-sm duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-95 peer-focus:px-2 ltr:left-1 rtl:right-1"
+        >
+          Contraseña
+        </label>
+        <button
+          type="button"
+          class="absolute top-1/2 -translate-y-1/2 cursor-pointer ltr:right-3 rtl:left-3
+                 text-muted-foreground hover:text-foreground transition"
+          (click)="togglePasswordTextType()"
+          aria-label="Mostrar u ocultar contraseña"
+        >
+          <svg-icon
+            [src]="passwordVisible()
+              ? 'assets/icons/heroicons/outline/eye.svg'
+              : 'assets/icons/heroicons/outline/eye-off.svg'"
+            [svgClass]="'h-6 w-6'"
+          ></svg-icon>
+        </button>
+        @if (submitted && f['password'].errors) {
+          <div class="mt-2 text-sm text-destructive">
+            @if (f['password'].errors['required']) {
+              <div>Campo obligatorio</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-2 flex items-center justify-between">
+    <app-button type="button" routerLink="/auth/forgot-password" impact="none" tone="primary" shape="rounded" size="large">
+      ¿Olvidaste tu contraseña?
+    </app-button>
+  </div>
+
+  <div>
+    <app-button full impact="bold" tone="primary" shape="rounded" size="large" [disabled]="loading()">
+      {{ loading() ? 'Iniciando sesión...' : 'Ingresar' }}
+    </app-button>
+  </div>
+
+</form>
+
+<!-- Modal unificado de errores -->
+@if (modalVisible()) {
+  <div
+    class="fixed left-0 top-0 z-[9999] flex h-screen w-screen items-center justify-center bg-slate-900/60 backdrop-blur-sm"
+    (click)="cerrarModal()">
+    <div
+      class="relative mx-4 w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200"
+      (click)="$event.stopPropagation()">
+
+      <!-- franja superior según tipo -->
+      @if (modalTipo() === 'warning') {
+        <div class="h-1.5 w-full bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500"></div>
+      } @else {
+        <div class="h-1.5 w-full bg-gradient-to-r from-red-500 via-rose-500 to-red-400"></div>
+      }
+
+      <div class="flex flex-col items-center px-8 pt-8 pb-7 text-center">
+
+        <!-- ícono según tipo -->
+        @if (modalTipo() === 'warning') {
+          <div class="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 ring-8 ring-amber-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+        } @else {
+          <div class="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 ring-8 ring-red-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374L10.051 3.378c.866-1.5 3.032-1.5 3.898 0L21.303 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+        }
+
+        <!-- título -->
+        <h3 class="mb-1.5 text-xl font-bold text-slate-800">{{ modalTitulo() }}</h3>
+
+        <!-- línea de color según tipo -->
+        @if (modalTipo() === 'warning') {
+          <p class="mb-2 text-sm font-semibold text-amber-500">Acceso no permitido</p>
+        } @else {
+          <p class="mb-2 text-sm font-semibold text-red-500">Inténtalo de nuevo</p>
+        }
+
+        <p class="mb-7 text-sm leading-relaxed text-slate-500">{{ modalMensaje() }}</p>
+
+        <!-- botón según tipo -->
+        @if (modalTipo() === 'warning') {
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            class="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-amber-100 transition hover:from-amber-500 hover:to-orange-500 active:scale-[0.98]">
+            Entendido
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            class="w-full rounded-xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-200 transition hover:from-red-600 hover:to-rose-600 active:scale-[0.98]">
+            Cerrar
+          </button>
+        }
+
+      </div>
+    </div>
+  </div>
+}

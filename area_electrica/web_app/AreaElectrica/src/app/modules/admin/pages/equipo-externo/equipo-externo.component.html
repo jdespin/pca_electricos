@@ -1,0 +1,125 @@
+<div class="p-4">
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Equipos Externos</h2>
+      <p class="text-sm text-gray-500">
+        Registro y administración de equipos externos
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <input type="text" placeholder="Buscar por equipo, serie, fabricante, tipo o ubicación..."
+        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 sm:w-72"
+        [(ngModel)]="filtro" />
+
+      <button type="button"
+        class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 active:bg-blue-800"
+        (click)="crearNuevoEquipo()">
+        + Crear nuevo
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-gray-50 text-gray-600">
+        <tr>
+          <th class="px-4 py-3">Tipo de equipo</th>
+          <th class="px-4 py-3">Equipo</th>
+          <th class="px-4 py-3">Identificador</th>
+          <th class="px-4 py-3">Serie</th>
+          <th class="px-4 py-3">Fabricante</th>
+          <th class="px-4 py-3">Año</th>
+          <th class="px-4 py-3">Ubicación</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="w-72 px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-200">
+        <tr *ngIf="cargando">
+          <td colspan="9" class="px-4 py-6 text-center text-gray-500">
+            Cargando equipos...
+          </td>
+        </tr>
+
+        <tr *ngIf="!cargando && equiposFiltrados.length === 0">
+          <td colspan="9" class="px-4 py-6 text-center text-gray-500">
+            No hay equipos para mostrar.
+          </td>
+        </tr>
+
+        <ng-container *ngIf="!cargando">
+          <tr *ngFor="let p of equiposFiltrados; let i = index; trackBy: trackByEquipo" class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.strtipoequipo ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.strequipo ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.stridentificador ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 font-mono text-gray-800">
+              {{ p.strserie ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.strfabricante ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.intanio ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800">
+              {{ p.strubicacion ?? '-' }}
+            </td>
+
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                [class.bg-green-100]="(p.blestado ?? p.activo) === true"
+                [class.text-green-800]="(p.blestado ?? p.activo) === true"
+                [class.bg-red-100]="(p.blestado ?? p.activo) !== true"
+                [class.text-red-800]="(p.blestado ?? p.activo) !== true">
+                <span class="mr-1.5 inline-block h-2 w-2 rounded-full"
+                  [class.bg-green-500]="(p.blestado ?? p.activo) === true"
+                  [class.bg-red-500]="(p.blestado ?? p.activo) !== true"></span>
+                {{ (p.blestado ?? p.activo) === true ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-2">
+                <button type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+                  (click)="verDetalleEquipo(p)">
+                  Ver detalle
+                </button>
+
+                <button type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+                  (click)="editarEquipo(p)">
+                  Editar
+                </button>
+
+                <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                  [class.bg-red-100]="(p.blestado ?? p.activo) === true"
+                  [class.text-red-700]="(p.blestado ?? p.activo) === true"
+                  [class.hover:bg-red-200]="(p.blestado ?? p.activo) === true"
+                  [class.bg-green-100]="(p.blestado ?? p.activo) !== true"
+                  [class.text-green-700]="(p.blestado ?? p.activo) !== true"
+                  [class.hover:bg-green-200]="(p.blestado ?? p.activo) !== true" (click)="toggleEstadoEquipo(p)">
+                  {{ (p.blestado ?? p.activo) === true ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+</div>

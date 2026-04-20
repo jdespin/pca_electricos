@@ -1,0 +1,185 @@
+<div class="p-4">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900">Registrar equipo</h2>
+            <p class="text-sm text-gray-500">
+                Complete la información del equipo.
+            </p>
+        </div>
+
+        <button type="button"
+            class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            (click)="cancelar()">
+            Volver
+        </button>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+
+
+        <div class="space-y-4 px-5 py-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Tipo de Equipo</label>
+                    <select
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.idtipoequipo" name="idtipoequipo">
+                        <option [ngValue]="null" disabled>Seleccione...</option>
+                        <option *ngFor="let item of listaTipoEquipo" [ngValue]="item.idtipoequipo">
+                            {{ item.strnombre }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Identificador</label>
+                        <input type="text"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            [(ngModel)]="objEquipo.stridentificador" name="stridentificador"
+                            (input)="onIdentificadorChange($event.target.value)" />
+                    </div>
+
+                    <div class="flex items-end">
+                        <p *ngIf="verificandoIdentificador" class="text-xs text-gray-500">
+                            Verificando identificador...
+                        </p>
+
+                        <p *ngIf="identificadorExiste" class="text-xs font-medium text-red-600">
+                            El equipo ya se encuentra registrado.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Serie</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strserie" name="strserie" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Grupo de Conexión</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strconexion" name="strconexion" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Tipo / Clase</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strtipoclase" name="strtipoclase" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Plano de Referencia</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strplanoreferencia" name="strplanoreferencia" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Fabricante</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strfabricante" name="strfabricante" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Voltaje Megger</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strvoltajemegger" name="strvoltajemegger" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Equipo</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strequipo" name="strequipo" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">AT</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strat" name="strat" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">BT</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strbt" name="strbt" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Capacidad</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strcapacidad" name="strcapacidad" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Tipo de Fluido</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strtipofluido" name="strtipofluido" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Peso Aceite</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strpesoaceite" name="strpesoaceite" />
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Peso Total</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strpesototal" name="strpesototal" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Año</label>
+                    <select
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.intanio" name="intanio">
+                        <option [ngValue]="null" disabled>Seleccione un año...</option>
+                        <option *ngFor="let intanio of listaAnios" [ngValue]="intanio">
+                            {{ intanio }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Ubicación</label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        [(ngModel)]="objEquipo.strubicacion" name="strubicacion" />
+                </div>
+
+            </div>
+
+            <div *ngIf="mensajeEstado" class="text-sm" [class.text-red-600]="tipoMensajeEstado === 'error'"
+                [class.text-green-700]="tipoMensajeEstado === 'success'">
+                {{ mensajeEstado }}
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 border-t px-5 py-4">
+            <button type="button"
+                class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                (click)="cancelar()">
+                Cancelar
+            </button>
+
+            <button type="button"
+                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
+                [disabled]="disableGuardar" (click)="guardarEquipo()">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>

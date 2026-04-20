@@ -1,0 +1,172 @@
+<div class="p-4">
+
+  <!-- Header -->
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Uso de Equipos</h2>
+      <p class="text-sm text-gray-500">Historial de solicitudes y devoluciones de equipos internos</p>
+    </div>
+    @if (buscado && registrosFiltrados.length > 0) {
+      <button type="button"
+        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+        (click)="exportarPDF()">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Exportar PDF
+      </button>
+    }
+  </div>
+
+  <!-- Filtros -->
+  <div class="mb-5 rounded-xl border border-gray-200 bg-white p-4">
+    <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Filtros</p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha desde</label>
+        <input type="date"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          [(ngModel)]="fechaDesde" name="fechaDesde" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha hasta</label>
+        <input type="date"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          [(ngModel)]="fechaHasta" name="fechaHasta" />
+      </div>
+
+      <div class="sm:col-span-2 lg:col-span-1">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Buscar técnico o equipo</label>
+        <input type="text"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          [(ngModel)]="filtroTecnico" name="filtroTecnico"
+          placeholder="Nombre o equipo..." />
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button type="button"
+          class="flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
+          style="background:#093E80"
+          (click)="buscar()">
+          Buscar
+        </button>
+        @if (buscado) {
+          <button type="button"
+            class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition"
+            (click)="limpiar()">
+            Limpiar
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  @if (cargando) {
+    <div class="flex items-center justify-center py-16">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <span class="ml-3 text-sm text-gray-500">Cargando registros...</span>
+    </div>
+  } @else if (!buscado) {
+    <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 py-16 text-center">
+      <svg class="h-10 w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <p class="text-sm font-medium text-gray-500">Selecciona un rango de fechas y pulsa <strong>Buscar</strong></p>
+      <p class="text-xs text-gray-400 mt-1">También puedes buscar sin filtros para ver todos los registros</p>
+    </div>
+  } @else if (registrosFiltrados.length === 0) {
+    <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 py-16 text-center">
+      <svg class="h-10 w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="text-sm font-medium text-gray-500">No se encontraron registros para los filtros aplicados</p>
+    </div>
+  } @else {
+    <div class="mb-2 flex items-center justify-between">
+      <span class="text-xs text-gray-400">{{ registrosFiltrados.length }} registro(s) encontrado(s)</span>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <tr>
+            <th class="px-3 py-2.5">Técnico</th>
+            <th class="px-3 py-2.5">Equipo</th>
+            <th class="px-3 py-2.5">Marca / Modelo</th>
+            <th class="px-3 py-2.5">Serie</th>
+            <th class="px-3 py-2.5">Fecha solicitud</th>
+            <th class="px-3 py-2.5">Fecha devolución</th>
+            <th class="px-3 py-2.5 text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          @for (r of registrosFiltrados; track r.iduso) {
+            <tr class="hover:bg-gray-50">
+
+              <!-- Técnico -->
+              <td class="px-3 py-2.5 font-medium text-gray-900">
+                <div class="flex items-center gap-2">
+                  <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                    style="background:#093E80">
+                    {{ (r.strnombretecnico ?? '?')[0]?.toUpperCase() }}
+                  </div>
+                  {{ r.strnombretecnico ?? '—' }}
+                </div>
+              </td>
+
+              <!-- Equipo -->
+              <td class="px-3 py-2.5">
+                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                  {{ r.strequipo ?? '—' }}
+                </span>
+              </td>
+
+              <!-- Marca / Modelo -->
+              <td class="px-3 py-2.5 text-gray-700">
+                {{ r.strmarca ?? '' }} {{ r.strmodelo ?? '' }}
+              </td>
+
+              <!-- Serie -->
+              <td class="px-3 py-2.5 font-mono text-gray-500">{{ r.strserie ?? '—' }}</td>
+
+              <!-- Fecha solicitud -->
+              <td class="px-3 py-2.5 text-gray-700 whitespace-nowrap">
+                {{ formatFechaHora(r.dtfechainicio) }}
+              </td>
+
+              <!-- Fecha devolución -->
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                @if (r.dtfechafin) {
+                  <span class="text-gray-700">{{ formatFechaHora(r.dtfechafin) }}</span>
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </td>
+
+              <!-- Estado -->
+              <td class="px-3 py-2.5 text-center">
+                @if (r.blactivo) {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                    En uso
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                    Devuelto
+                  </span>
+                }
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>

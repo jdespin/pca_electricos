@@ -1,0 +1,142 @@
+<button
+  (click)="abrirModal()"
+  type="button"
+  class="group relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground/60 hover:bg-muted hover:text-primary transition-all duration-200">
+
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+    <path stroke-linecap="round" stroke-linejoin="round"
+      d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+  </svg>
+
+  @if (noLeidas > 0) {
+    <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+      {{ noLeidas > 9 ? '9+' : noLeidas }}
+    </span>
+  }
+</button>
+
+@if (modalAbierto) {
+  <div class="fixed inset-0 z-50 flex items-start justify-end p-4 sm:p-6"
+       (click)="cerrarModal()">
+
+    
+    <div class="relative mt-14 w-full max-w-md rounded-2xl border border-border bg-background shadow-2xl flex flex-col max-h-[80vh]"
+         (click)="$event.stopPropagation()">
+
+      
+      <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-primary">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+          </svg>
+          <span class="text-sm font-semibold text-foreground">Notificaciones</span>
+          @if (noLeidas > 0) {
+            <span class="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-red-500 text-[11px] font-bold text-white">
+              {{ noLeidas }}
+            </span>
+          }
+        </div>
+
+        <div class="flex items-center gap-3">
+          @if (noLeidas > 0) {
+            <button (click)="marcarTodasLeidas()"
+                    class="text-xs text-primary hover:underline font-medium">
+              Marcar todas como leídas
+            </button>
+          }
+          <button (click)="cerrarModal()"
+                  class="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      
+      <ul class="overflow-y-auto divide-y divide-border flex-1">
+
+        @if (cargando) {
+          <li class="flex items-center justify-center py-12">
+            <svg class="h-6 w-6 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+          </li>
+        }
+
+        @if (!cargando && notificaciones.length === 0) {
+          <li class="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="h-12 w-12 text-muted-foreground/30 mb-3">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            </svg>
+            <p class="text-sm font-medium text-muted-foreground">Sin notificaciones</p>
+            <p class="text-xs text-muted-foreground/60 mt-1">Aquí aparecerán los reportes enviados y avisos del sistema.</p>
+          </li>
+        }
+
+        @for (n of notificaciones; track n.idnotificacion) {
+          <li
+            (click)="irANotificacion(n)"
+            class="flex cursor-pointer gap-3 px-5 py-4 transition-colors hover:bg-muted/40"
+            [class.bg-blue-50/40]="!n.boolleida">
+
+            
+            <div class="shrink-0 mt-0.5">
+              @if (!n.boolleida) {
+                
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                  </svg>
+                </span>
+              } @else {
+                
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                  </svg>
+                </span>
+              }
+            </div>
+
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-semibold text-foreground leading-snug" [class.text-muted-foreground]="n.boolleida">
+                  {{ n.strtitulo }}
+                </p>
+                @if (!n.boolleida) {
+                  <span class="inline-block mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500"></span>
+                }
+              </div>
+              <p class="text-xs text-muted-foreground mt-1 leading-relaxed">{{ n.strmensaje }}</p>
+              <div class="flex items-center justify-between mt-2">
+                <p class="text-[10px] text-muted-foreground/60">{{ tiempoRelativo(n.fechacreacion) }}</p>
+                @if (n.idorden) {
+                  <span class="text-[10px] text-primary font-medium">Ver orden →</span>
+                }
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+
+      
+      @if (notificaciones.length > 0) {
+        <div class="border-t border-border px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-muted-foreground">
+            {{ notificaciones.length }} notificación{{ notificaciones.length !== 1 ? 'es' : '' }}
+            @if (noLeidas > 0) { · <span class="text-blue-600 font-medium">{{ noLeidas }} sin leer</span> }
+          </span>
+          <a routerLink="/orden/finalizada" (click)="cerrarModal()"
+             class="text-xs text-primary hover:underline font-medium">
+            Ver órdenes finalizadas
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+}

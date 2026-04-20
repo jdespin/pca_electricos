@@ -1,0 +1,92 @@
+<div class="p-4">
+  
+  <div class="mb-4">
+    <h2 class="text-xl font-semibold text-gray-900">Reporte por período</h2>
+    <p class="text-sm text-gray-500">Consulta órdenes de trabajo dentro de un rango de fechas.</p>
+  </div>
+
+  
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+      <input
+        type="date"
+        class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+        [(ngModel)]="fechaDesde"
+      />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+      <input
+        type="date"
+        class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+        [(ngModel)]="fechaHasta"
+      />
+    </div>
+    <button
+      type="button"
+      class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
+      [disabled]="!fechaDesde || !fechaHasta"
+      (click)="buscar()"
+    >
+      Buscar
+    </button>
+    <div class="flex gap-2 sm:ml-auto">
+      <button
+        *ngIf="buscado && ordenes.length > 0"
+        type="button"
+        class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        (click)="exportarPDF()"
+      >
+        Exportar PDF
+      </button>
+      <button
+        *ngIf="buscado && ordenes.length > 0"
+        type="button"
+        class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        (click)="exportarExcel()"
+      >
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-gray-50 text-gray-600">
+        <tr>
+          <th class="px-4 py-3 w-20">#</th>
+          <th class="px-4 py-3">Contrato</th>
+          <th class="px-4 py-3">Proyecto</th>
+          <th class="px-4 py-3">Locación</th>
+          <th class="px-4 py-3">Fecha</th>
+          <th class="px-4 py-3">Estado</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <tr *ngIf="!buscado">
+          <td colspan="6" class="px-4 py-6 text-center text-gray-400">
+            Seleccione un rango de fechas y presione Buscar.
+          </td>
+        </tr>
+        <tr *ngIf="cargando">
+          <td colspan="6" class="px-4 py-6 text-center text-gray-500">Buscando...</td>
+        </tr>
+        <tr *ngIf="buscado && !cargando && ordenes.length === 0">
+          <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+            No se encontraron órdenes en ese período.
+          </td>
+        </tr>
+        <tr *ngFor="let o of ordenes; let i = index" class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-mono text-gray-700">{{ i + 1 }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strcontrato }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strproyecto }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strlocacion }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.dtfecha | date:'dd/MM/yyyy' }}</td>
+          <td class="px-4 py-3 text-gray-800">{{ o.strestado }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

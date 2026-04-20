@@ -1,0 +1,744 @@
+<div class="p-4">
+  
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Órdenes finalizadas</h2>
+      <p class="text-sm text-gray-500">Listado de órdenes de trabajo completadas.</p>
+    </div>
+    
+  </div>
+
+  
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <table class="w-full text-left text-xs">
+      <thead class="bg-gray-50 text-gray-600">
+        <tr>
+          <th class="px-3 py-2">Contratista</th>
+          <th class="px-3 py-2">Subcontratista</th>
+          <th class="px-3 py-2">Sitio</th>
+          <th class="px-3 py-2">Fecha</th>
+          <th class="px-3 py-2">Estado</th>
+          <th class="px-3 py-2">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <tr *ngIf="cargando">
+          <td colspan="6" class="px-3 py-6 text-center text-gray-500">Cargando órdenes...</td>
+        </tr>
+        <tr *ngIf="!cargando && ordenes.length === 0">
+          <td colspan="6" class="px-3 py-6 text-center text-gray-500">
+            No hay órdenes finalizadas.
+          </td>
+        </tr>
+        <tr *ngIf="!cargando && ordenes.length > 0 && ordenesVisibles.length === 0">
+          <td colspan="6" class="px-3 py-8 text-center">
+            <p class="text-slate-500 text-xs">Sin resultados para <span class="font-semibold text-[#093E80]">"{{ busquedaSrv.termino() }}"</span></p>
+            <p class="text-slate-400 text-xs mt-1">Intenta con otro contrato, proyecto o locación.</p>
+          </td>
+        </tr>
+        <tr *ngFor="let o of paginatedOrdenes; let i = index" class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-800">{{ o.strcontratista }}</td>
+          <td class="px-3 py-2 text-gray-800">{{ o.strsubcontratista }}</td>
+          <td class="px-3 py-2 text-gray-800">{{ o.strsitio }}</td>
+          <td class="px-3 py-2 text-gray-800">{{ o.dtfecha | date:'dd/MM/yyyy' }}</td>
+          <td class="px-3 py-2">
+            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                  [ngClass]="estadoClases(o.strestado)">
+              {{ estadoLabel(o.strestado) }}
+            </span>
+          </td>
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-1">
+              <button (click)="verDetalle(o)" title="Ver detalle"
+                class="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+              <button (click)="verReporteTecnico(o)" title="Ver reporte técnico"
+                class="rounded-md p-1.5 text-purple-600 hover:bg-purple-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </button>
+
+              <button (click)="abrirEvaluar(o)" title="Evaluar orden"
+                class="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+              </button>
+              <button (click)="abrirEliminar(o)" title="Eliminar"
+                class="rounded-md p-1.5 text-red-500 hover:bg-red-50 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="mt-0 flex flex-col gap-3 rounded-b-xl border border-t-0 border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+      <span>Mostrando <span class="font-semibold text-gray-800">{{ paginaInicio }}–{{ paginaFin }}</span> de <span class="font-semibold text-gray-800">{{ ordenes.length }}</span> registros</span>
+      <select [(ngModel)]="pageSize" (ngModelChange)="cambiarPageSize($event)"
+        class="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option *ngFor="let s of pageSizes" [value]="s">{{ s }} por página</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-1">
+      <button (click)="cambiarPagina(currentPage - 1)" [disabled]="currentPage === 1"
+        class="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 transition">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Anterior
+      </button>
+      <ng-container *ngFor="let p of paginaRango; let prev = index">
+        <span *ngIf="prev > 0 && p - paginaRango[prev - 1] > 1" class="px-1 text-gray-400">…</span>
+        <button (click)="cambiarPagina(p)"
+          [ngClass]="p === currentPage ? 'bg-[#093E80] text-white border-[#093E80]' : 'border-gray-300 text-gray-700 hover:bg-gray-50'"
+          class="min-w-[36px] rounded-lg border px-3 py-1.5 text-sm font-medium transition">
+          {{ p }}
+        </button>
+      </ng-container>
+      <button (click)="cambiarPagina(currentPage + 1)" [disabled]="currentPage >= totalPages"
+        class="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 transition">
+        Siguiente
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+
+  <div *ngIf="ordenDetalle" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
+
+      <!-- Header -->
+      <div class="rounded-t-2xl px-6 pt-5 pb-4 flex-shrink-0" style="background: linear-gradient(135deg, #093E80, #1a5fb4)">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-white/50 text-[11px] font-semibold uppercase tracking-widest mb-1.5">Detalle de orden</p>
+            <p class="text-white font-bold text-lg leading-tight truncate mb-2">{{ ordenDetalle.strcontratista || '—' }}</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="rounded-full bg-white/20 border border-white/30 px-2.5 py-0.5 text-xs font-semibold text-white capitalize">
+                {{ ordenDetalle.strtipo | titlecase }}
+              </span>
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold" [ngClass]="estadoClases(ordenDetalle.strestado)">
+                {{ estadoLabel(ordenDetalle.strestado) }}
+              </span>
+              <span *ngIf="ordenDetalle.dtfechacreacion" class="text-white/50 text-xs">{{ ordenDetalle.dtfechacreacion }}</span>
+            </div>
+          </div>
+          <button (click)="cerrarDetalle()" class="flex-shrink-0 rounded-full p-1.5 text-white/70 hover:text-white hover:bg-white/20 transition">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+        <div *ngIf="cargandoDetalle" class="py-10 flex flex-col items-center gap-2">
+          <svg class="h-6 w-6 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          <span class="text-sm text-gray-400">Cargando detalle...</span>
+        </div>
+
+        <ng-container *ngIf="!cargandoDetalle">
+
+          <!-- Datos generales -->
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Datos generales</p>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p class="text-[11px] font-medium text-gray-400 mb-0.5">Contratista</p>
+                <p class="font-semibold text-gray-800 text-sm truncate">{{ ordenDetalle.strcontratista || '—' }}</p>
+              </div>
+              <div class="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p class="text-[11px] font-medium text-gray-400 mb-0.5">Subcontratista</p>
+                <p class="font-semibold text-gray-800 text-sm truncate">{{ ordenDetalle.strsubcontratista || '—' }}</p>
+              </div>
+              <div class="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p class="text-[11px] font-medium text-gray-400 mb-0.5">Sitio</p>
+                <p class="font-semibold text-gray-800 text-sm truncate">{{ ordenDetalle.strsitio || '—' }}</p>
+              </div>
+              <div class="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p class="text-[11px] font-medium text-gray-400 mb-0.5">Orden de compra</p>
+                <p class="font-semibold text-gray-800 text-sm font-mono">{{ ordenDetalle.strordencompra || '—' }}</p>
+              </div>
+              <div class="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p class="text-[11px] font-medium text-gray-400 mb-0.5">Fecha</p>
+                <p class="font-semibold text-gray-800 text-sm">{{ ordenDetalle.dtfecha | date:'dd/MM/yyyy' }}</p>
+              </div>
+              <div class="rounded-xl border px-4 py-3"
+                [class.bg-green-50]="ordenDetalle.strterminado === 'si'" [class.border-green-200]="ordenDetalle.strterminado === 'si'"
+                [class.bg-red-50]="ordenDetalle.strterminado === 'no'"   [class.border-red-200]="ordenDetalle.strterminado === 'no'"
+                [class.bg-gray-50]="!ordenDetalle.strterminado"          [class.border-gray-100]="!ordenDetalle.strterminado">
+                <p class="text-[11px] font-medium text-gray-400 mb-1">Trabajo terminado</p>
+                <span class="inline-flex items-center gap-1.5 text-sm font-bold"
+                  [class.text-green-700]="ordenDetalle.strterminado === 'si'"
+                  [class.text-red-600]="ordenDetalle.strterminado === 'no'"
+                  [class.text-gray-400]="!ordenDetalle.strterminado">
+                  <svg *ngIf="ordenDetalle.strterminado === 'si'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <svg *ngIf="ordenDetalle.strterminado === 'no'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  {{ ordenDetalle.strterminado === 'si' ? 'Sí — Terminado' : ordenDetalle.strterminado === 'no' ? 'No — En curso' : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calificación (visible solo si existe) -->
+          <div *ngIf="ordenDetalle.strcalificacion" class="flex items-center gap-4 rounded-xl border px-4 py-3"
+            [class.border-emerald-200]="ordenDetalle.strcalificacion === 'A'" [class.bg-emerald-50]="ordenDetalle.strcalificacion === 'A'"
+            [class.border-blue-200]="ordenDetalle.strcalificacion === 'B'"   [class.bg-blue-50]="ordenDetalle.strcalificacion === 'B'"
+            [class.border-amber-200]="ordenDetalle.strcalificacion === 'C'"  [class.bg-amber-50]="ordenDetalle.strcalificacion === 'C'">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full text-lg font-extrabold flex-shrink-0"
+              [class.bg-emerald-100]="ordenDetalle.strcalificacion === 'A'" [class.text-emerald-700]="ordenDetalle.strcalificacion === 'A'"
+              [class.bg-blue-100]="ordenDetalle.strcalificacion === 'B'"   [class.text-blue-700]="ordenDetalle.strcalificacion === 'B'"
+              [class.bg-amber-100]="ordenDetalle.strcalificacion === 'C'"  [class.text-amber-700]="ordenDetalle.strcalificacion === 'C'">
+              {{ ordenDetalle.strcalificacion }}
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-gray-500">Calificación de evaluación</p>
+              <p class="font-bold text-sm"
+                [class.text-emerald-700]="ordenDetalle.strcalificacion === 'A'"
+                [class.text-blue-700]="ordenDetalle.strcalificacion === 'B'"
+                [class.text-amber-700]="ordenDetalle.strcalificacion === 'C'">
+                {{ ordenDetalle.strcalificacion === 'A' ? 'Excelente' : ordenDetalle.strcalificacion === 'B' ? 'Bueno' : 'Regular' }}
+              </p>
+              <p *ngIf="ordenDetalle.strobservacionevaluacion" class="text-xs text-gray-500 mt-0.5">{{ ordenDetalle.strobservacionevaluacion }}</p>
+            </div>
+          </div>
+
+          <!-- Supervisor -->
+          <div class="flex items-center gap-3 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style="background:#093E80">
+              {{ (ordenDetalle.nombresupervisor || '?').charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <p class="text-[11px] text-blue-400 font-medium">Supervisor / Creador</p>
+              <p class="font-bold text-blue-900 text-sm">{{ ordenDetalle.nombresupervisor || '—' }}</p>
+            </div>
+          </div>
+
+          <!-- Personal asignado -->
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Personal asignado</p>
+            <div *ngIf="ordenDetalle.personal?.length; else sinPersonal" class="space-y-2">
+              <div *ngFor="let p of ordenDetalle.personal"
+                  class="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                <div class="flex items-center gap-2.5">
+                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    [class.text-white]="p.boolider" [class.bg-gray-200]="!p.boolider" [class.text-gray-600]="!p.boolider"
+                    [style.background]="p.boolider ? '#093E80' : null">
+                    {{ p.nombre.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="text-sm font-medium text-gray-800">{{ p.nombre }}</span>
+                </div>
+                <span *ngIf="p.boolider" class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white" style="background:#093E80">
+                  <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                  Líder
+                </span>
+              </div>
+            </div>
+            <ng-template #sinPersonal>
+              <p class="text-sm text-gray-400 italic">Sin personal asignado.</p>
+            </ng-template>
+          </div>
+
+        </ng-container>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end border-t px-6 py-4 flex-shrink-0">
+        <button (click)="cerrarDetalle()" class="rounded-xl border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  
+  <div *ngIf="ordenEstado" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b px-6 py-4">
+        <h3 class="text-base font-semibold text-gray-900">Cambiar estado — #{{ ordenEstado.idorden }}</h3>
+        <button (click)="cerrarCambioEstado()" class="rounded-md p-1 text-gray-400 hover:text-gray-600">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-2 px-6 py-5">
+        <button *ngFor="let e of estadosLista"
+          (click)="ordenEstado.nuevoEstado = e.value"
+          [ngClass]="ordenEstado.nuevoEstado === e.value ? e.activeCls : 'border-gray-200 bg-gray-50 text-gray-700'"
+          class="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition">
+          <span class="h-2.5 w-2.5 rounded-full flex-shrink-0" [ngClass]="e.dotCls"></span>
+          {{ e.label }}
+        </button>
+      </div>
+      <div class="flex justify-end gap-3 border-t px-6 py-4">
+        <button (click)="cerrarCambioEstado()"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancelar</button>
+        <button (click)="confirmarCambioEstado()" [disabled]="cambiandoEstado"
+          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+          {{ cambiandoEstado ? 'Guardando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div *ngIf="ordenEliminar" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+      <div class="space-y-3 px-6 py-6 text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-gray-900">¿Eliminar orden #{{ ordenEliminar.idorden }}?</h3>
+        <p class="text-sm text-gray-500">Esta acción es irreversible. Se eliminará el personal asignado y las notificaciones relacionadas.</p>
+      </div>
+      <div class="flex justify-center gap-3 border-t px-6 py-4">
+        <button (click)="cerrarEliminar()"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancelar</button>
+        <button (click)="confirmarEliminar()" [disabled]="eliminando"
+          class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+          {{ eliminando ? 'Eliminando...' : 'Sí, eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div *ngIf="ordenEvaluar" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+  <div class="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
+    <div class="flex items-center gap-3 border-b px-6 py-4">
+      <span class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </span>
+      <div>
+        <h3 class="text-base font-semibold text-gray-900">Evaluar orden</h3>
+        <p class="text-xs text-gray-500">Orden #{{ ordenEvaluar.idorden }} — {{ ordenEvaluar.strcontratista || ordenEvaluar.strsubcontratista }}</p>
+      </div>
+    </div>
+
+    <div class="px-6 py-5 space-y-4">
+      <p class="text-sm text-gray-600">Asigna una calificación al trabajo realizado. Esta acción marcará la orden como <strong class="text-emerald-700">Evaluada</strong>.</p>
+
+      
+      <div class="grid grid-cols-3 gap-3">
+        <button type="button" (click)="calificacionSeleccionada = 'A'"
+          class="flex flex-col items-center gap-1 rounded-xl border-2 py-4 text-sm font-bold transition-all"
+          [class.border-emerald-500]="calificacionSeleccionada === 'A'"
+          [class.bg-emerald-50]="calificacionSeleccionada === 'A'"
+          [class.text-emerald-700]="calificacionSeleccionada === 'A'"
+          [class.border-gray-200]="calificacionSeleccionada !== 'A'"
+          [class.text-gray-400]="calificacionSeleccionada !== 'A'">
+          <span class="text-2xl font-extrabold">A</span>
+          <span class="text-[11px] font-medium">Excelente</span>
+        </button>
+        <button type="button" (click)="calificacionSeleccionada = 'B'"
+          class="flex flex-col items-center gap-1 rounded-xl border-2 py-4 text-sm font-bold transition-all"
+          [class.border-blue-500]="calificacionSeleccionada === 'B'"
+          [class.bg-blue-50]="calificacionSeleccionada === 'B'"
+          [class.text-blue-700]="calificacionSeleccionada === 'B'"
+          [class.border-gray-200]="calificacionSeleccionada !== 'B'"
+          [class.text-gray-400]="calificacionSeleccionada !== 'B'">
+          <span class="text-2xl font-extrabold">B</span>
+          <span class="text-[11px] font-medium">Bueno</span>
+        </button>
+        <button type="button" (click)="calificacionSeleccionada = 'C'"
+          class="flex flex-col items-center gap-1 rounded-xl border-2 py-4 text-sm font-bold transition-all"
+          [class.border-amber-500]="calificacionSeleccionada === 'C'"
+          [class.bg-amber-50]="calificacionSeleccionada === 'C'"
+          [class.text-amber-700]="calificacionSeleccionada === 'C'"
+          [class.border-gray-200]="calificacionSeleccionada !== 'C'"
+          [class.text-gray-400]="calificacionSeleccionada !== 'C'">
+          <span class="text-2xl font-extrabold">C</span>
+          <span class="text-[11px] font-medium">Regular</span>
+        </button>
+      </div>
+
+      
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Observación <span class="text-gray-400 font-normal">(opcional)</span></label>
+        <textarea [(ngModel)]="observacionEvaluacion" rows="3" placeholder="Ingrese un comentario u observación sobre la calificación..."
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 resize-none"></textarea>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 border-t px-6 py-4">
+      <button (click)="cerrarEvaluar()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancelar</button>
+      <button (click)="confirmarEvaluar()" [disabled]="!calificacionSeleccionada || evaluando"
+        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-40">
+        {{ evaluando ? 'Guardando...' : 'Confirmar evaluación' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════ MODAL REPORTE TÉCNICO ═══════════════════════════════════ -->
+<div *ngIf="reporteTecnico" class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+  <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl flex flex-col my-6 overflow-hidden">
+
+    <!-- Header gradiente -->
+    <div style="background: linear-gradient(135deg, #093E80, #1a5fb4)" class="px-6 py-5 flex-shrink-0">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0 flex-1">
+          <!-- Badges de tipo y estado -->
+          <div class="flex items-center gap-2 flex-wrap mb-3">
+            <span class="text-white/50 text-[11px] font-semibold uppercase tracking-widest">Reporte técnico</span>
+            <span class="rounded-full bg-white/20 border border-white/30 px-2.5 py-0.5 text-xs font-semibold text-white capitalize">
+              {{ reporteTecnico.strtipo }}
+            </span>
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold" [ngClass]="estadoClases(reporteTecnico.strestado)">
+              {{ estadoLabel(reporteTecnico.strestado) }}
+            </span>
+          </div>
+          <!-- Datos generales en grid -->
+          <div class="grid grid-cols-2 gap-2">
+            <div *ngIf="reporteTecnico.strcontratista" class="rounded-lg bg-white/10 px-3 py-2">
+              <p class="text-white/50 text-[10px] font-medium uppercase tracking-wide mb-0.5">Contratista</p>
+              <p class="text-white font-semibold text-sm truncate">{{ reporteTecnico.strcontratista }}</p>
+            </div>
+            <div *ngIf="reporteTecnico.strsubcontratista" class="rounded-lg bg-white/10 px-3 py-2">
+              <p class="text-white/50 text-[10px] font-medium uppercase tracking-wide mb-0.5">Subcontratista</p>
+              <p class="text-white font-semibold text-sm truncate">{{ reporteTecnico.strsubcontratista }}</p>
+            </div>
+            <div *ngIf="reporteTecnico.strsitio" class="rounded-lg bg-white/10 px-3 py-2">
+              <p class="text-white/50 text-[10px] font-medium uppercase tracking-wide mb-0.5">Sitio</p>
+              <p class="text-white font-semibold text-sm truncate">{{ reporteTecnico.strsitio }}</p>
+            </div>
+            <div *ngIf="reporteTecnico.strordencompra" class="rounded-lg bg-white/10 px-3 py-2">
+              <p class="text-white/50 text-[10px] font-medium uppercase tracking-wide mb-0.5">Orden de compra</p>
+              <p class="text-white font-semibold text-sm truncate">{{ reporteTecnico.strordencompra }}</p>
+            </div>
+          </div>
+        </div>
+        <button (click)="cerrarReporteTecnico()" class="flex-shrink-0 rounded-full p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Técnico bar -->
+      <div *ngIf="reporteTecnico.reportesOrden?.length > 0" class="mt-4 rounded-xl bg-white/10 border border-white/10 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div class="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          {{ reporteTecnico.reportesOrden[0].tecnico?.charAt(0) ?? 'T' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-white font-semibold text-sm truncate">{{ reporteTecnico.reportesOrden[0].tecnico }}</p>
+          <p class="text-white/50 text-xs">Enviado: {{ reporteTecnico.reportesOrden[0].dtfechaenvio }}</p>
+        </div>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border"
+          [ngClass]="{
+            'bg-green-400/20 text-green-100 border-green-400/40': reporteTecnico.reportesOrden[0].strterminado === 'si',
+            'bg-red-400/20   text-red-100   border-red-400/40':   reporteTecnico.reportesOrden[0].strterminado === 'no',
+            'bg-white/10     text-white/60  border-white/20':    !reporteTecnico.reportesOrden[0].strterminado
+          }">
+          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              [attr.d]="reporteTecnico.reportesOrden[0].strterminado === 'si' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'"/>
+          </svg>
+          Trabajo {{ reporteTecnico.reportesOrden[0].strterminado === 'si' ? 'terminado' : reporteTecnico.reportesOrden[0].strterminado === 'no' ? 'no terminado' : 'sin registrar' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b bg-gray-50/80 px-6 flex-shrink-0">
+      <button (click)="tabReporte = 'reporte'"
+        [ngClass]="tabReporte === 'reporte' ? 'border-b-2 border-[#093E80] text-[#093E80] font-semibold' : 'text-gray-500 hover:text-gray-700'"
+        class="px-4 py-3 text-sm transition -mb-px flex items-center gap-1.5">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Reporte general
+      </button>
+      <button (click)="tabReporte = 'equipos'"
+        [ngClass]="tabReporte === 'equipos' ? 'border-b-2 border-[#093E80] text-[#093E80] font-semibold' : 'text-gray-500 hover:text-gray-700'"
+        class="px-4 py-3 text-sm transition -mb-px flex items-center gap-1.5">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+        Equipos y Fotografías
+        <span *ngIf="reporteTecnico.reportesEquipo?.length" class="rounded-full bg-[#093E80]/10 text-[#093E80] px-1.5 py-0.5 text-xs font-bold leading-none">
+          {{ reporteTecnico.reportesEquipo.length }}
+        </span>
+        <span *ngIf="cargandoFotos" class="h-3 w-3 animate-spin rounded-full border-2 border-[#093E80]/30 border-t-[#093E80] block"></span>
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="overflow-y-auto px-6 py-5 max-h-[60vh]">
+
+      <!-- Cargando -->
+      <div *ngIf="cargandoReporte" class="py-16 flex flex-col items-center gap-3 text-gray-400">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#093E80]"></div>
+        <p class="text-sm">Cargando reporte...</p>
+      </div>
+
+      <!-- Sin reporte -->
+      <ng-container *ngIf="!cargandoReporte && reporteTecnico.reportesOrden?.length === 0 && reporteTecnico.reportesEquipo?.length === 0">
+        <div class="py-16 flex flex-col items-center gap-3 text-center">
+          <div class="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-gray-600">Aún no hay reporte enviado</p>
+          <p class="text-xs text-gray-400 max-w-xs">El técnico todavía no ha sincronizado el formulario desde la app móvil.</p>
+        </div>
+      </ng-container>
+
+      <!-- TAB: Reporte general -->
+      <ng-container *ngIf="!cargandoReporte && tabReporte === 'reporte' && reporteTecnico.reportesOrden?.length > 0">
+        <div *ngFor="let r of reporteTecnico.reportesOrden; let i = index" [class.mb-6]="i < reporteTecnico.reportesOrden.length - 1">
+
+          <!-- Técnico label (si hay varios) -->
+          <div *ngIf="reporteTecnico.reportesOrden.length > 1" class="mb-3 flex items-center gap-2">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#093E80">
+              {{ r.tecnico?.charAt(0) ?? 'T' }}
+            </div>
+            <span class="text-sm font-semibold text-gray-700">{{ r.tecnico }}</span>
+            <span class="text-xs text-gray-400">— {{ r.dtfechaenvio }}</span>
+          </div>
+
+          <!-- Cards de estado -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div class="rounded-xl border border-gray-200 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Desviación general</p>
+              <span class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold border"
+                [ngClass]="{
+                  'bg-red-50    text-red-700    border-red-200':    r.strdesviaciongeneral === 'Si',
+                  'bg-green-50  text-green-700  border-green-200':  r.strdesviaciongeneral === 'No',
+                  'bg-yellow-50 text-yellow-700 border-yellow-200': r.strdesviaciongeneral === 'PNC',
+                  'bg-gray-50   text-gray-500   border-gray-200':  !r.strdesviaciongeneral
+                }">
+                <span class="h-2 w-2 rounded-full flex-shrink-0"
+                  [ngClass]="{
+                    'bg-red-500':    r.strdesviaciongeneral === 'Si',
+                    'bg-green-500':  r.strdesviaciongeneral === 'No',
+                    'bg-yellow-500': r.strdesviaciongeneral === 'PNC',
+                    'bg-gray-400':  !r.strdesviaciongeneral
+                  }"></span>
+                {{ r.strdesviaciongeneral === 'Si' ? 'Sí — Hay desviación'
+                   : r.strdesviaciongeneral === 'No' ? 'Sin desviación'
+                   : r.strdesviaciongeneral === 'PNC' ? 'Por no conformidad'
+                   : 'No especificado' }}
+              </span>
+            </div>
+            <div class="rounded-xl border border-gray-200 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Trabajo terminado</p>
+              <span class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold border"
+                [ngClass]="{
+                  'bg-green-50 text-green-700 border-green-200': r.strterminado === 'si',
+                  'bg-red-50   text-red-700   border-red-200':   r.strterminado === 'no',
+                  'bg-gray-50  text-gray-500  border-gray-200': !r.strterminado
+                }">
+                <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    [attr.d]="r.strterminado === 'si' ? 'M5 13l4 4L19 7' : r.strterminado === 'no' ? 'M6 18L18 6M6 6l12 12' : 'M12 8v4m0 4h.01'"/>
+                </svg>
+                {{ r.strterminado === 'si' ? 'Sí — Terminado' : r.strterminado === 'no' ? 'No terminado' : 'No especificado' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Conclusión -->
+          <div class="rounded-xl border border-gray-200 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Conclusión / Observaciones</p>
+            <p class="text-sm leading-relaxed whitespace-pre-wrap"
+              [class.text-gray-700]="r.strconclusiongeneral"
+              [class.text-gray-400]="!r.strconclusiongeneral"
+              [class.italic]="!r.strconclusiongeneral">
+              {{ r.strconclusiongeneral || 'Sin conclusión registrada.' }}
+            </p>
+          </div>
+
+        </div>
+      </ng-container>
+
+      <!-- TAB: Equipos y Fotografías -->
+      <ng-container *ngIf="!cargandoReporte && tabReporte === 'equipos'">
+        <div *ngIf="!equiposConFotos.length" class="py-10 text-center text-sm text-gray-400">No hay reportes de equipos.</div>
+        <div *ngFor="let item of equiposConFotos; let last = last" [class.mb-5]="!last" class="rounded-xl border border-gray-200 overflow-hidden">
+
+          <!-- Equipo header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100" style="background: linear-gradient(to right, rgba(9,62,128,0.05), rgba(26,95,180,0.05))">
+            <div class="flex items-center gap-3">
+              <span class="rounded-lg px-3 py-1 text-sm font-bold text-white" style="background:#093E80">{{ item.reporte.strtipoequipo }}</span>
+              <span class="text-sm font-semibold text-gray-700">{{ tipoEquipoLabel(item.reporte.strtipoequipo) }}</span>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                [ngClass]="{
+                  'bg-green-100  text-green-700':   item.reporte.strestadogeneral === 'Bueno',
+                  'bg-yellow-100 text-yellow-700':  item.reporte.strestadogeneral === 'Regular',
+                  'bg-red-100    text-red-700':      item.reporte.strestadogeneral === 'Deficiente',
+                  'bg-gray-100   text-gray-500':    !item.reporte.strestadogeneral
+                }">
+                {{ item.reporte.strestadogeneral || 'Sin estado' }}
+              </span>
+              <span class="text-xs text-gray-400 hidden sm:block">{{ item.reporte.dtfechaenvio }}</span>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-4">
+
+            <!-- Datos generales (solo si hay valores) -->
+            <div *ngIf="item.reporte.strpotencia || item.reporte.strserial || item.reporte.strmarca || item.reporte.strcaf">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Datos del equipo</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div *ngIf="item.reporte.strpotencia" class="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                  <p class="text-xs text-gray-400 mb-0.5">Potencia</p>
+                  <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strpotencia }}</p>
+                </div>
+                <div *ngIf="item.reporte.strserial" class="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                  <p class="text-xs text-gray-400 mb-0.5">Serial</p>
+                  <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strserial }}</p>
+                </div>
+                <div *ngIf="item.reporte.strmarca" class="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                  <p class="text-xs text-gray-400 mb-0.5">Marca</p>
+                  <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strmarca }}</p>
+                </div>
+                <div *ngIf="item.reporte.strcaf" class="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                  <p class="text-xs text-gray-400 mb-0.5">CAF</p>
+                  <p class="font-semibold text-gray-800 text-sm">{{ item.reporte.strcaf }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actividades -->
+            <div *ngIf="item.reporte.stractividades">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Actividades realizadas</p>
+              <ul class="space-y-1.5">
+                <li *ngFor="let act of item.reporte.stractividades.split('\n')" class="flex items-start gap-2 text-sm text-gray-700">
+                  <span class="mt-0.5 h-4 w-4 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg class="h-2.5 w-2.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </span>
+                  {{ act }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Desviaciones -->
+            <div *ngIf="item.reporte.strdesviaciones">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Desviaciones encontradas</p>
+              <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 whitespace-pre-wrap leading-relaxed">{{ item.reporte.strdesviaciones }}</div>
+            </div>
+
+            <!-- Fotografías -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Fotografías <span class="ml-1 rounded-full bg-[#093E80]/10 text-[#093E80] px-1.5 py-0.5 text-xs font-bold">{{ item.fotos.length }}</span>
+                </p>
+                <span *ngIf="cargandoFotos" class="flex items-center gap-1 text-xs text-[#093E80]/60">
+                  <span class="h-3 w-3 animate-spin rounded-full border-2 border-[#093E80]/30 border-t-[#093E80] block"></span>
+                  Cargando...
+                </span>
+              </div>
+              <p *ngIf="!item.fotos.length" class="text-xs text-gray-400 italic">Sin fotografías.</p>
+              <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                <div *ngFor="let f of item.fotos" (click)="ampliarFoto(f.idfotoequipo)"
+                     class="group relative aspect-square rounded-xl overflow-hidden border-2 bg-gray-100 cursor-pointer transition"
+                     [ngClass]="fotoSrc(f.idfotoequipo) ? 'border-gray-200 hover:border-[#093E80]' : 'border-dashed border-gray-200'">
+                  <img *ngIf="fotoSrc(f.idfotoequipo)" [src]="fotoSrc(f.idfotoequipo)"
+                    class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-200" [alt]="f.stretiqueta"/>
+                  <div *ngIf="!fotoSrc(f.idfotoequipo)" class="absolute inset-0 flex items-center justify-center">
+                    <span *ngIf="cargandoFotos" class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-[#093E80] block"></span>
+                    <svg *ngIf="!cargandoFotos" class="h-7 w-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1.5">
+                    <p class="text-white text-[10px] truncate font-medium text-center">{{ f.stretiqueta || 'Extra' }}</p>
+                  </div>
+                  <span *ngIf="f.boolobligatoria" class="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full border-2 border-white block" style="background:#093E80" title="Obligatoria"></span>
+                  <div *ngIf="f.dbllatitud" class="absolute top-1.5 left-1.5 rounded-md bg-black/50 px-1 py-0.5">
+                    <p class="text-white text-[8px] font-bold">GPS</p>
+                  </div>
+                  <div *ngIf="fotoSrc(f.idfotoequipo)" class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/20">
+                    <svg class="h-8 w-8 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <!-- GPS coords -->
+              <div *ngIf="fotosConGps(item.fotos).length" class="mt-2 space-y-1">
+                <p class="text-xs font-semibold text-gray-400 mb-1">Coordenadas GPS</p>
+                <div *ngFor="let f of fotosConGps(item.fotos)" class="flex items-center gap-2 text-xs text-gray-600 bg-blue-50 rounded-lg px-3 py-1.5">
+                  <svg class="h-3 w-3 text-[#093E80] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span class="font-semibold text-[#093E80]">{{ f.stretiqueta || 'Extra' }}:</span>
+                  <span>{{ f.dbllatitud }}, {{ f.dbllongitud }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between border-t px-6 py-4 bg-gray-50/50 flex-shrink-0">
+      <p class="text-xs text-gray-400">
+        {{ reporteTecnico.reportesEquipo?.length ?? 0 }} equipo(s) &nbsp;·&nbsp; {{ reporteTecnico.fotosEquipo?.length ?? 0 }} foto(s)
+      </p>
+      <div class="flex items-center gap-2">
+        <button *ngIf="reporteTecnico.reportesOrden?.length > 0" (click)="evaluarDesdeReporte()"
+          class="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          Evaluar
+        </button>
+        <button (click)="cerrarReporteTecnico()" style="background:#093E80"
+          class="rounded-lg px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Foto ampliada -->
+<div *ngIf="fotoAmpliada" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" (click)="cerrarFoto()">
+  <img [src]="fotoAmpliada" alt="Foto ampliada" class="max-w-full max-h-full rounded-xl object-contain shadow-2xl" (click)="$event.stopPropagation()"/>
+  <button (click)="cerrarFoto()" class="absolute top-4 right-4 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40 transition">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
+</div>
