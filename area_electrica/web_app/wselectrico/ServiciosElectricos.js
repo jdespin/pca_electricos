@@ -23,24 +23,8 @@ const rutaequipoexterno = require('./rutas/admin/rutaequipoexterno');
 
 
 
-const rutasituacionlaboral = require('./rutas/catalogos/rutasituacionlaboral');
-const rutatipoempresa = require('./rutas/catalogos/rutatipoempresa');
-const rutatiposolicitud = require('./rutas/catalogos/rutatiposolicitud');
-
-
-const rutaenviarcorreo = require('./rutas/compartido/rutaenviarcorreo');
-const rutamensajesolicitud = require('./rutas/compartido/rutamensajesolicitud');
-const rutaubicacion = require('./rutas/compartido/rutaubicacion');
-
-
-
-const rutaempresa = require('./rutas/empresa/rutaempresa');
-
 
 const rutapersonas = require('./rutas/persona/rutacentralpersona');
-
-
-const rutareportes = require('./rutas/reporte/rutareportes');
 
 
 const rutaorden = require('./rutas/orden/rutaorden');
@@ -96,25 +80,8 @@ app.use(url + '/rutatipoequipo', rutatipoequipo);
 app.use(url + '/rutaequipoexterno', rutaequipoexterno);
 
 
-app.use(url + '/rutasituacionlaboral', rutasituacionlaboral);
-app.use(url + '/rutatipoempresa', rutatipoempresa);
-app.use(url + '/rutatiposolicitud', rutatiposolicitud);
-
-
-app.use(url + '/rutaenviarcorreo', rutaenviarcorreo);
-app.use(url + '/rutamensajesolicitud', rutamensajesolicitud);
-app.use(url + '/rutaubicacion', rutaubicacion);
-
-
-
-
-app.use(url + '/rutaempresa', rutaempresa);
-
-
 app.use(url + '/rutapersonas', rutapersonas);
 
-
-app.use(url + '/rutareportes', rutareportes);
 
 
 app.use(url + '/rutaorden', rutaorden);
